@@ -1,0 +1,83 @@
+.teamsetup-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  padding: 1.5rem;
+}
+
+.teamsetup-card {
+  background: #111111;
+  border: 1px solid #222222;
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.teamsetup-card h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.teamsetup-sub {
+  color: #999;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.teamsetup-tabs {
+  display: flex;
+  background: #161616;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.teamsetup-tabs button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.6rem;
+  border-radius: 8px;
+  color: #999;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.teamsetup-tabs button.active {
+  background: #c8ff3d;
+  color: #0a0a0a;
+}
+
+.teamsetup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.teamsetup-form input {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.teamsetup-form input:focus {
+  border-color: #c8ff3d;
+}
+
+.teamsetup-form input::placeholder {
+  color: #666;
+}

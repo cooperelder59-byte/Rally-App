@@ -1,27 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/landing.css';
-import huddle from '../assets/huddle.png';
+import huddle from "../assets/huddle.png";
+import hockey from "../assets/hockey.png";
+
+const galleryImages = [
+    huddle,
+    hockey,
+]
 
 export default function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', role: '' });
-  const [successMsg, setSuccessMsg] = useState(false);
   const navigate = useNavigate();
-
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    // Show success message
-    setSuccessMsg(true);
-    setFormData({ name: '', email: '', role: '' });
-    setTimeout(() => setSuccessMsg(false), 3000);
-  };
-
-  const handleInputChange = (e) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
-
   const GREEN = '#c8ff3d';
 
   return (
@@ -30,18 +20,19 @@ export default function Landing() {
       <header>
         <div className="header-inner">
           <a href="#" className="logo">
-            <svg width="80" height="32" viewBox="0 0 108 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="80" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <polygon points="0,0 13,16 0,32 7,32 20,16 7,0" fill={GREEN}/>
               <polygon points="10,0 23,16 10,32 17,32 30,16 17,0" fill={GREEN}/>
               <polygon points="20,0 33,16 20,32 27,32 40,16 27,0" fill={GREEN}/>
-              <text x="43" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="16" fontWeight="800" fill={GREEN} letterSpacing="0.06em">RALLY</text>
+              <text x="43" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="20" fontWeight="800" fill={GREEN} letterSpacing="0.06em">RALLY</text>
             </svg>
           </a>
           <nav>
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
             <a href="#about">About</a>
-            <button onClick={() => navigate('/login')} className="btn btn-primary">Get started</button>
+            <button onClick={() => navigate('/register')} className="btn btn-primary">Get started</button>
           </nav>
           <button 
             className="hamburger" 
@@ -54,8 +45,9 @@ export default function Landing() {
           <div className="mobile-nav open">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
             <a href="#about">About</a>
-            <a onClick={() => navigate('/login')}>Get started</a>
+            <a onClick={() => navigate('/register')}>Get started</a>
           </div>
         )}
       </header>
@@ -63,18 +55,92 @@ export default function Landing() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-inner">
+
           <div className="hero-text">
             <div className="eyebrow">School sports & clubs</div>
-            <h1>Bring your<br/><span className="accent">team together.</span></h1>
-            <p>Rally is the platform built for school sports teams, clubs, and groups. One place for communication, scheduling, attendance, and coordination — so coaches and students can focus on what matters.</p>
+            <h1>
+              Bring your<br />
+              <span className="accent">team together.</span>
+            </h1>
+            <p>
+              Rally is the platform built for school sports teams, clubs, and groups.
+              One place for communication, scheduling, attendance, and coordination —
+              so coaches and students can focus on what matters.
+            </p>
             <div className="hero-actions">
-              <button onClick={() => navigate('/login')} className="btn btn-primary">Get started</button>
-              <a href="#features" className="btn btn-ghost">See what's coming</a>
+              <button onClick={() => navigate('/register')} className="btn btn-primary">
+                Get started
+              </button>
+              <a href="#features" className="btn btn-ghost">
+                See what's coming
+              </a>
             </div>
           </div>
-            <img src={huddle} alt="Football Huddle" width="500" />
+
+          <div className="hero-gallery" style={{gap: '20px' }}>
+            {galleryImages.map((image, index) => (
+              <div key={index} className="gallery-image-card">
+                <img
+                  src={image}
+                  alt={`Gallery ${index + 1}`}
+                  className={`hero-image-img ${index === 1 ? "rugby-big" : ""}`}
+                />
+              </div>
+            ))}
+          </div>
+
         </div>
         <div className="hero-rule"></div>
+      </section>
+
+      {/* PRODUCT MOCKUP */}
+      <section className="section" id="preview">
+        <div className="container">
+          <div className="section-header">
+            <div className="eyebrow">See it in action</div>
+            <h2>Your team's home base.</h2>
+          </div>
+
+          <div className="mockup-frame">
+            <div className="mockup-topbar">
+              <div className="mockup-dot red"></div>
+              <div className="mockup-dot yellow"></div>
+              <div className="mockup-dot green"></div>
+            </div>
+            <div className="mockup-body">
+              <div className="mockup-sidebar">
+                <div className="mockup-logo">RALLY</div>
+                <div className="mockup-nav-item active">Dashboard</div>
+                <div className="mockup-nav-item">Messages</div>
+                <div className="mockup-nav-item">Schedule</div>
+                <div className="mockup-nav-item">Performance</div>
+                <div className="mockup-nav-item">Team</div>
+              </div>
+              <div className="mockup-main">
+                <div className="mockup-card">
+                  <div className="mockup-card-label">Upcoming Events</div>
+                  <div className="mockup-card-line"></div>
+                  <div className="mockup-card-line short"></div>
+                </div>
+                <div className="mockup-card">
+                  <div className="mockup-card-label">Messages</div>
+                  <div className="mockup-card-line"></div>
+                  <div className="mockup-card-line short"></div>
+                </div>
+                <div className="mockup-card">
+                  <div className="mockup-card-label">Team Activity</div>
+                  <div className="mockup-card-line"></div>
+                  <div className="mockup-card-line short"></div>
+                </div>
+                <div className="mockup-card">
+                  <div className="mockup-card-label">Performance</div>
+                  <div className="mockup-card-line"></div>
+                  <div className="mockup-card-line short"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* FEATURES */}
@@ -180,62 +246,72 @@ export default function Landing() {
       <section className="section section-dark" id="about">
         <div className="container container-narrow">
           <div className="eyebrow">About Rally</div>
-          <h2>We're just getting started.</h2>
-          <p>Rally is being built from the ground up to fix the disorganisation that school sports teams and clubs deal with every season. We're in early development — talking to coaches, students, and admins to make sure Rally solves real problems.</p>
-          <p>The first milestone is this web launch: establishing the brand and laying the foundation for the full platform. From here, Rally grows into a complete web app, and eventually into mobile apps for iOS and Android.</p>
-          <p>If you want to help shape what Rally becomes, join the waitlist or get in touch.</p>
+          <h2>Built for school sports and clubs.</h2>
+          <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, attendance, and payments.</p>
+          <p>Create your team, invite your players, and get your season organised in minutes.</p>
         </div>
       </section>
 
-      {/* WAITLIST */}
-      <section className="section section-waitlist" id="waitlist">
-        <div className="container container-narrow">
-          <div className="eyebrow">Get involved</div>
-          <h2>Be first when Rally launches.</h2>
-          <p className="waitlist-sub">Join the waitlist for early access and updates as Rally develops.</p>
-          {!successMsg ? (
-            <form className="waitlist-form" onSubmit={handleFormSubmit}>
-              <div className="form-row">
-                <input 
-                  type="text" 
-                  id="name" 
-                  placeholder="Your name" 
-                  required 
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-                <input 
-                  type="email" 
-                  id="email" 
-                  placeholder="Your email" 
-                  required 
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <select 
-                id="role" 
-                required
-                value={formData.role}
-                onChange={handleInputChange}
-              >
-                <option value="" disabled>I am a…</option>
-                <option value="student">Student or player</option>
-                <option value="coach">Coach or team manager</option>
-                <option value="admin">School administrator</option>
-                <option value="parent">Parent</option>
-                <option value="other">Other</option>
-              </select>
-              <button type="submit" className="btn btn-primary btn-full">Join the waitlist</button>
-              <p className="form-note">No spam. Updates only when Rally is ready.</p>
-            </form>
-          ) : (
-            <div className="success-msg visible">
-              <div className="success-check">✓</div>
-              <h3>You're on the list.</h3>
-              <p>We'll be in touch when Rally is ready. Thanks for your interest.</p>
+      {/* PRICING */}
+      <section className="section section-dark" id="pricing">
+        <div className="container">
+          <div className="section-header">
+            <div className="eyebrow">Pricing</div>
+            <h2>Simple pricing.<br/>No surprises.</h2>
+          </div>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <div className="pricing-tier">Free</div>
+              <div className="pricing-price">$0<span>/mo</span></div>
+              <p className="pricing-desc">For small teams just getting started.</p>
+              <ul className="pricing-list">
+                <li>Up to 20 members</li>
+                <li>Team messaging</li>
+                <li>Shared calendar</li>
+                <li>Basic attendance tracking</li>
+              </ul>
+              <button onClick={() => navigate('/register')} className="btn btn-ghost btn-full">Get started</button>
             </div>
-          )}
+
+            <div className="pricing-card featured">
+              <div className="pricing-badge">Most popular</div>
+              <div className="pricing-tier">Team</div>
+              <div className="pricing-price">$12<span>/mo</span></div>
+              <p className="pricing-desc">For active teams running a full season.</p>
+              <ul className="pricing-list">
+                <li>Unlimited members</li>
+                <li>Payments & fee collection</li>
+                <li>Lineups & performance tracking</li>
+                <li>Priority support</li>
+              </ul>
+              <button onClick={() => navigate('/register')} className="btn btn-primary btn-full">Get started</button>
+            </div>
+
+            <div className="pricing-card">
+              <div className="pricing-tier">School / Club</div>
+              <div className="pricing-price">Custom</div>
+              <p className="pricing-desc">For schools / clubs managing multiple teams.</p>
+              <ul className="pricing-list">
+                <li>Multiple teams & clubs</li>
+                <li>Admin dashboard</li>
+                <li>Custom roles & permissions</li>
+                <li>Dedicated onboarding</li>
+              </ul>
+              <button onClick={() => navigate('#')} className="btn btn-ghost btn-full">Contact us</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="section section-waitlist" id="get-started">
+        <div className="container container-narrow">
+          <div className="eyebrow">Get started</div>
+          <h2>Ready to bring your team together?</h2>
+          <p className="waitlist-sub">Create your team and start organising your season today.</p>
+          <button onClick={() => navigate('/register')} className="btn btn-primary btn-full">
+            Get started — it's free
+          </button>
         </div>
       </section>
 

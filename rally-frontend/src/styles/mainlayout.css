@@ -1,0 +1,143 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background-color: #0d0d0d;
+  border-right: 1px solid #1f1f1f;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+  transition: width 0.3s ease, padding 0.3s ease;
+}
+
+.sidebar.open {
+  width: 240px;
+  padding: 1.5rem 1rem;
+}
+
+.sidebar.closed {
+  width: 0;
+  padding: 0;
+}
+
+.sidebar-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sidebar-logo h2 {
+  margin: 0;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #c8ff3d;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-tag {
+  margin: 0;
+  font-size: 11px;
+  color: #777;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #bbb;
+  font-size: 14px;
+  font-weight: 400;
+  border-left: 3px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+.sidebar-link.active {
+  background-color: rgba(200, 255, 61, 0.1);
+  color: #c8ff3d;
+  font-weight: 600;
+  border-left: 3px solid #c8ff3d;
+}
+
+.sidebar-logout {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #c8ff3d;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000000;
+  transition: filter 0.15s ease;
+}
+
+.sidebar-logout:hover {
+  filter: brightness(0.9);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background-color: #0d0d0d;
+  border-bottom: 1px solid #1f1f1f;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sidebar-toggle {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #ccc;
+}
+
+.sidebar-toggle:hover {
+  color: #c8ff3d;
+}
+
+.topbar-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Barlow Condensed', sans-serif;
+  color: #fff;
+}
+
+.page-content {
+  flex: 1;
+  padding: 2rem;
+  overflow: auto;
+  color: #eee;
+}
