@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/landing.css';
-import huddle from "../assets/huddle.png";
-import hockey from "../assets/hockey.png";
-
-const galleryImages = [
-    huddle,
-    hockey,
-]
+import juniorSoccer from '../assets/junior-soccer.svg';
 
 export default function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -20,11 +14,11 @@ export default function Landing() {
       <header>
         <div className="header-inner">
           <a href="#" className="logo">
-            <svg width="80" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="80" height="32" viewBox="0 0 108 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <polygon points="0,0 13,16 0,32 7,32 20,16 7,0" fill={GREEN}/>
               <polygon points="10,0 23,16 10,32 17,32 30,16 17,0" fill={GREEN}/>
               <polygon points="20,0 33,16 20,32 27,32 40,16 27,0" fill={GREEN}/>
-              <text x="43" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="20" fontWeight="800" fill={GREEN} letterSpacing="0.06em">RALLY</text>
+              <text x="43" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="16" fontWeight="800" fill={GREEN} letterSpacing="0.06em">RALLY</text>
             </svg>
           </a>
           <nav>
@@ -78,15 +72,9 @@ export default function Landing() {
           </div>
 
           <div className="hero-gallery" style={{gap: '20px' }}>
-            {galleryImages.map((image, index) => (
-              <div key={index} className="gallery-image-card">
-                <img
-                  src={image}
-                  alt={`Gallery ${index + 1}`}
-                  className={`hero-image-img ${index === 1 ? "rugby-big" : ""}`}
-                />
-              </div>
-            ))}
+            <div className="gallery-image-card">
+              <img src={juniorSoccer} alt="Junior soccer team" className="hero-image-img" />
+            </div>
           </div>
 
         </div>
@@ -260,6 +248,7 @@ export default function Landing() {
             <h2>Simple pricing.<br/>No surprises.</h2>
           </div>
           <div className="pricing-grid">
+            {/* FREE PLAN */}
             <div className="pricing-card">
               <div className="pricing-tier">Free</div>
               <div className="pricing-price">$0<span>/mo</span></div>
@@ -273,6 +262,7 @@ export default function Landing() {
               <button onClick={() => navigate('/register')} className="btn btn-ghost btn-full">Get started</button>
             </div>
 
+            {/* TEAM PLAN - WITH STRIPE */}
             <div className="pricing-card featured">
               <div className="pricing-badge">Most popular</div>
               <div className="pricing-tier">Team</div>
@@ -284,20 +274,26 @@ export default function Landing() {
                 <li>Lineups & performance tracking</li>
                 <li>Priority support</li>
               </ul>
-              <button onClick={() => navigate('/register')} className="btn btn-primary btn-full">Get started</button>
+              <button 
+                onClick={() => window.location.href = 'https://buy.stripe.com/test_7sY5kw3JBaoR93UaRE3ks00'} 
+                className="btn btn-primary btn-full"
+              >
+                Get started
+              </button>
             </div>
 
+            {/* SCHOOL PLAN */}
             <div className="pricing-card">
-              <div className="pricing-tier">School / Club</div>
+              <div className="pricing-tier">School</div>
               <div className="pricing-price">Custom</div>
-              <p className="pricing-desc">For schools / clubs managing multiple teams.</p>
+              <p className="pricing-desc">For schools managing multiple teams.</p>
               <ul className="pricing-list">
                 <li>Multiple teams & clubs</li>
                 <li>Admin dashboard</li>
                 <li>Custom roles & permissions</li>
                 <li>Dedicated onboarding</li>
               </ul>
-              <button onClick={() => navigate('#')} className="btn btn-ghost btn-full">Contact us</button>
+              <button onClick={() => window.location.href = 'mailto:hello@rally.com'} className="btn btn-ghost btn-full">Contact us</button>
             </div>
           </div>
         </div>

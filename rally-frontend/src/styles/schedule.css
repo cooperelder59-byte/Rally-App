@@ -1,0 +1,288 @@
+:root {
+  --bg: #050505;
+  --card: #111111;
+  --card-hover: #171717;
+  --border: #2a2a2a;
+  --accent: #c6ff39;
+  --text: #ffffff;
+  --muted: #777777;
+}
+
+.schedule-page {
+  padding: 32px;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.schedule-header {
+  margin-bottom: 24px;
+}
+
+.schedule-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.schedule-header p {
+  color: var(--muted);
+}
+
+/* BUTTONS */
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-danger {
+  background: #ff4d4d;
+  color: white;
+}
+
+.btn-create {
+  margin-bottom: 24px;
+}
+
+/* TABS */
+
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  background: #121212;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* MAIN CARD */
+
+.schedule-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+/* CALENDAR */
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.calendar-header button {
+  background: #141414;
+  border: 1px solid var(--border);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 12px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.calendar-day {
+  min-height: 120px;
+  background: #0f0f0f;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  transition: 0.2s;
+}
+
+.calendar-day:hover {
+  border-color: var(--accent);
+}
+
+.calendar-day.today {
+  border-color: var(--accent);
+  box-shadow: 0 0 15px rgba(198,255,57,.15);
+}
+
+.day-number {
+  font-weight: 700;
+}
+
+/* EVENT DOTS */
+
+.event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.practice { background: #c6ff39; }
+.game { background: #ffb020; }
+.meeting { background: #36d399; }
+.tournament { background: #ff4d4d; }
+.training { background: #00bfff; }
+.other { background: #999; }
+
+/* EVENT LIST */
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-card {
+  display: flex;
+  gap: 16px;
+  background: #111;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.event-card:hover {
+  background: var(--card-hover);
+}
+
+.event-date {
+  width: 70px;
+  text-align: center;
+}
+
+.date-day {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.date-month {
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.event-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.event-type,
+.event-time,
+.event-location,
+.event-description {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* MODAL */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 700px;
+  background: #111;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #ddd;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: #0b0b0b;
+  border: 1px solid var(--border);
+  color: white;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* TOAST */
+
+.toast {
+  margin-bottom: 20px;
+  padding: 14px;
+  border-left: 4px solid var(--accent);
+  background: #111;
+  border-radius: 8px;
+}
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+  .calendar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .event-card {
+    flex-direction: column;
+  }
+}

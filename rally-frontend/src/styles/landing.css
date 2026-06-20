@@ -109,6 +109,23 @@ p { line-height: 1.7; }
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  align-items: flex-start;
+}
+
+.gallery-image-card {
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  overflow: visible;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: auto;
+}
+
+.gallery-image-card .hero-image-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .hero-image-glow {

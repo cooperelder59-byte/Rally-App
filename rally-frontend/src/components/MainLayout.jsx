@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
 import '../styles/mainlayout.css';
 
@@ -15,10 +17,19 @@ export default function MainLayout() {
     { path: '/messages', label: 'Messages' },
     { path: '/schedule', label: 'Schedule' },
     { path: '/performance', label: 'Performance' },
-    { path: '/team', label: 'Team' }
   ];
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('rally_current_team');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className="layout">
@@ -84,7 +95,7 @@ export default function MainLayout() {
           ))}
         </nav>
 
-        <button className="sidebar-logout">Logout</button>
+        <button className="sidebar-logout" onClick={handleLogout}>Logout</button>
       </div>
 
       {/* MAIN CONTENT */}
