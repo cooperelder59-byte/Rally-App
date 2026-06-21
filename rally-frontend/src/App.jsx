@@ -1,15 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { TeamProvider } from './context/TeamContext';
 import Landing from './pages/Landing';
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import TeamSetup from "./pages/TeamSetup";
+import Login from './pages/Login';
+import Register from './pages/Register';
+import TeamSetup from './pages/TeamSetup';
 import MainLayout from './components/MainLayout';
-
-import Dashboard from "./pages/Dashboard";
-import Messages from "./pages/Messages";
-import Schedule from "./pages/Schedule";
-import Performance from "./pages/Performance";
+import Dashboard from './pages/Dashboard';
+import Messages from './pages/Messages';
+import Schedule from './pages/Schedule';
+import Performance from './pages/Performance';
+import Roster from './pages/Roster';
 
 export default function App() {
   return (
@@ -28,6 +28,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/roster" element={<Roster />} />
             <Route path="/performance" element={<Performance />} />
           </Route>
 
