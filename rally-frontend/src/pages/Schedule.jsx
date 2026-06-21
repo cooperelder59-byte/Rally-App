@@ -266,7 +266,7 @@ function EventPhotos({ eventId, teamId }) {
         onMouseEnter={e => { e.currentTarget.style.borderColor = LIME; e.currentTarget.style.color = LIME; }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = MUTED; }}
       >
-        {uploading ? 'Uploading…' : '📷 Add photo'}
+        {uploading ? 'Uploading…' : 'Add photo'}
       </button>
     </div>
   );
@@ -317,7 +317,7 @@ function EventRow({ event, teamId, currentTeam, currentUser, onDelete, onAttenda
         <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, marginBottom: 4 }}>{event.title}</div>
         <div style={{ fontSize: 12, color: MUTED, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <span>{dayName(date)}{event.startTime ? `, ${fmt12(event.startTime)}` : ''}{event.endTime ? ` – ${fmt12(event.endTime)}` : ''}</span>
-          {event.location && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>📍 {event.location}</span>}
+          {event.location && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>{event.location}</span>}
         </div>
       </div>
 
@@ -381,7 +381,7 @@ function EventRowWithExpand({ event, teamId, currentTeam, currentUser, onDelete,
           <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, marginBottom: 4 }}>{event.title}</div>
           <div style={{ fontSize: 12, color: MUTED, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>{dayName(date)}{event.startTime ? `, ${fmt12(event.startTime)}` : ''}{event.endTime ? ` – ${fmt12(event.endTime)}` : ''}</span>
-            {event.location && <span>📍 {event.location}</span>}
+            {event.location && <span>{event.location}</span>}
           </div>
         </div>
 
@@ -644,7 +644,7 @@ export default function Schedule() {
 
         {!loading && grouped.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', color: MUTED }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📅</div>
+            <div style={{ fontSize: 36, marginBottom: 12 }}></div>
             <div style={{ fontWeight: 800, fontSize: 16, color: '#444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>No events</div>
             <div style={{ fontSize: 13 }}>Hit "New Event" to get started</div>
           </div>
