@@ -329,7 +329,7 @@ function EventRow({ event, teamId, currentTeam, currentUser, onDelete, onAttenda
             title="See attendance"
             style={{ background: SURFACE2, border: `1px solid ${BORDER}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: MUTED, cursor: 'pointer' }}
           >
-            👥 {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
+            {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
           </button>
           {isOwner && (
             <button
@@ -391,7 +391,7 @@ function EventRowWithExpand({ event, teamId, currentTeam, currentUser, onDelete,
               onClick={(e) => { e.stopPropagation(); onAttendance(event); }}
               style={{ background: SURFACE2, border: `1px solid ${BORDER}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: MUTED, cursor: 'pointer' }}
             >
-              👥 {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
+              {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
             </button>
             {isOwner && (
               <button
