@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   collection, query, where, orderBy, onSnapshot,
-  addDoc, serverTimestamp, doc, updateDoc, getDoc
+  addDoc, serverTimestamp, doc, updateDoc, getDoc, deleteDoc
 } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
 import '../styles/messages.css';
 
 export default function Messages() {
   const { currentTeam } = useTeam();
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [conversations, setConversations] = useState([]);
   const [activeConvo, setActiveConvo] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -20,9 +22,13 @@ export default function Messages() {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const currentUser = auth.currentUser;
+  // Wait for Firebase auth to resolve before doing anything
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setCurrentUser(u));
+    return () => unsub();
+  }, []);
 
-  // Load conversations for the current team
+  // Load conversations once we have both user and team
   useEffect(() => {
     if (!currentUser || !currentTeam?.id) {
       setConversations([]);
@@ -57,10 +63,10 @@ export default function Messages() {
       collection(db, 'conversations', activeConvo.id, 'messages'),
       orderBy('createdAt', 'asc')
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, (snap) => {
+      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, [activeConvo]);
 
   useEffect(() => {
@@ -84,10 +90,15 @@ export default function Messages() {
     });
   };
 
-  // Load team members by reading the team doc fresh from Firestore
-  // so we always have memberIds even if currentTeam context is stale
+  const handleDeleteConvo = async (convoId) => {
+    if (!window.confirm('Delete this conversation?')) return;
+    if (activeConvo?.id === convoId) setActiveConvo(null);
+    await deleteDoc(doc(db, 'conversations', convoId));
+  };
+
+  // Load team members directly from Firestore — currentTeam.memberIds is available
   const openNewConvo = async () => {
-    if (!currentTeam?.id) return;
+    if (!currentTeam?.id || !currentUser) return;
     setShowNewConvo(true);
     setSelectedMembers([]);
     setConvoName('');
@@ -95,11 +106,7 @@ export default function Messages() {
     setLoadingMembers(true);
 
     try {
-      // Read team doc directly to get fresh memberIds
-      const teamSnap = await getDoc(doc(db, 'teams', currentTeam.id));
-      if (!teamSnap.exists()) { setLoadingMembers(false); return; }
-
-      const memberIds = teamSnap.data().memberIds || [];
+      const memberIds = currentTeam.memberIds || [];
       const otherIds = memberIds.filter(uid => uid !== currentUser.uid);
 
       if (otherIds.length === 0) { setLoadingMembers(false); return; }
@@ -136,7 +143,7 @@ export default function Messages() {
 
   const handleCreateConvo = async (e) => {
     e.preventDefault();
-    if (selectedMembers.length === 0 || !currentTeam) return;
+    if (selectedMembers.length === 0 || !currentTeam || !currentUser) return;
 
     const participants = [currentUser.uid, ...selectedMembers];
     const type = selectedMembers.length === 1 ? 'direct' : 'group';
@@ -167,6 +174,8 @@ export default function Messages() {
     setActiveConvo({ id: convoRef.id, teamId: currentTeam.id, type, name, participants });
   };
 
+  const isAdmin = currentTeam?.ownerId === currentUser?.uid;
+
   return (
     <div className="messages-page">
 
@@ -179,15 +188,36 @@ export default function Messages() {
 
         {!currentTeam && <p className="convo-empty">Select a team to see messages</p>}
         {currentTeam && conversations.length === 0 && <p className="convo-empty">No conversations yet</p>}
+
         {conversations.map((c) => (
-          <button
-            key={c.id}
-            className={`convo-item ${activeConvo?.id === c.id ? 'active' : ''}`}
-            onClick={() => setActiveConvo(c)}
-          >
-            <div className="convo-name">{c.name}</div>
-            <div className="convo-last">{c.lastMessage || 'No messages yet'}</div>
-          </button>
+          <div key={c.id} style={{ position: 'relative' }}>
+            <button
+              className={`convo-item ${activeConvo?.id === c.id ? 'active' : ''}`}
+              onClick={() => setActiveConvo(c)}
+              style={{ paddingRight: isAdmin ? 36 : undefined }}
+            >
+              <div className="convo-name">{c.name}</div>
+              <div className="convo-last">{c.lastMessage || 'No messages yet'}</div>
+            </button>
+            {isAdmin && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDeleteConvo(c.id); }}
+                title="Delete conversation"
+                style={{
+                  position: 'absolute', top: '50%', right: 10,
+                  transform: 'translateY(-50%)',
+                  background: 'none', border: 'none',
+                  color: '#6B6B6B', fontSize: 16, cursor: 'pointer',
+                  lineHeight: 1, padding: '2px 4px', borderRadius: 4,
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => e.target.style.color = '#FF4444'}
+                onMouseLeave={e => e.target.style.color = '#6B6B6B'}
+              >
+                ×
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -237,16 +267,14 @@ export default function Messages() {
             <form onSubmit={handleCreateConvo}>
               <input
                 type="text"
-                placeholder="Conversation name (optional)"
+                placeholder="Group name (optional)"
                 value={convoName}
                 onChange={(e) => setConvoName(e.target.value)}
                 className="modal-input"
               />
 
               <div className="member-list">
-                {loadingMembers && (
-                  <p className="convo-empty">Loading members…</p>
-                )}
+                {loadingMembers && <p className="convo-empty">Loading members…</p>}
                 {!loadingMembers && teamMembers.length === 0 && (
                   <p className="convo-empty">No other team members yet</p>
                 )}
