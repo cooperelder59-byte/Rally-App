@@ -93,10 +93,14 @@ function Sidebar({
   activeNavPath,
   onLogout
 }) {
-  return (
+    return (
     <div className={`sidebar ${open ? 'open' : 'closed'}`}>
       <div className="sidebar-header">
-        <div className="sidebar-logo">
+        <div 
+          className="sidebar-logo"
+          onClick={() => navigate('/')}
+          style={{ cursor: 'pointer' }}
+        >
           <RallyLogo />
           <h2>RALLY</h2>
         </div>

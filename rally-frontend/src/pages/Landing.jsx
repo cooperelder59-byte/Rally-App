@@ -6,7 +6,7 @@ import juniorSoccer from '../assets/junior-soccer.svg';
 // Constants
 const GREEN = '#c8ff3d';
 const STRIPE_PAYMENT_URL = 'https://buy.stripe.com/test_7sY5kw3JBaoR93UaRE3ks00';
-const CONTACT_EMAIL = 'hello@rally.com';
+const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
