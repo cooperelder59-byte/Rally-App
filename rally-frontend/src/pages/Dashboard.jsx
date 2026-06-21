@@ -10,12 +10,7 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { auth, db, storage } from "../services/firebase";
+import { auth, db } from "../services/firebase";
 import { useTeam } from "../context/TeamContext";
 
 // ─── Theme & Constants ────────────────────────────────────────────────────────
@@ -506,13 +501,36 @@ function PhotoLightbox({ photo, onClose }) {
   );
 }
 
+// Firestore has a 1MB doc limit — we resize images client-side before saving as base64
+function resizeImageToBase64(file, maxDimension = 1200, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
+        else { width = Math.round((width / height) * maxDimension); height = maxDimension; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 function PhotosTab({ teamId, currentUser }) {
   const [photos, setPhotos]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress]   = useState(0);
   const [caption, setCaption]     = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [error, setError]         = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -536,44 +554,34 @@ function PhotosTab({ teamId, currentUser }) {
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !currentUser || !teamId) return;
+    setError("");
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+      setError("Please select an image file.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      alert("File too large. Max 10 MB.");
+    // Allow up to 20MB raw — we'll resize it down
+    if (file.size > 20 * 1024 * 1024) {
+      setError("File too large. Max 20 MB.");
       return;
     }
 
     setUploading(true);
-    setProgress(0);
-
     try {
-      const storageRef = ref(storage, `teams/${teamId}/photos/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        snap => setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-        err => { console.error("Upload error:", err); setUploading(false); },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          await addDoc(collection(db, "teams", teamId, "photos"), {
-            url,
-            caption: caption.trim() || null,
-            uploaderId: currentUser.uid,
-            uploaderName: currentUser.displayName || currentUser.email,
-            createdAt: serverTimestamp(),
-          });
-          setCaption("");
-          setUploading(false);
-          setProgress(0);
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-      );
+      const base64 = await resizeImageToBase64(file);
+      await addDoc(collection(db, "teams", teamId, "photos"), {
+        url: base64,
+        caption: caption.trim() || null,
+        uploaderId: currentUser.uid,
+        uploaderName: currentUser.displayName || currentUser.email,
+        createdAt: serverTimestamp(),
+      });
+      setCaption("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       console.error("Upload failed:", err);
+      setError("Upload failed — image may be too large for Firestore (1 MB doc limit). Try a smaller image.");
+    } finally {
       setUploading(false);
     }
   };
@@ -610,6 +618,11 @@ function PhotosTab({ teamId, currentUser }) {
           style={{ display: "none" }}
           id="photo-upload-input"
         />
+        {error && (
+          <div style={{ padding: "0 16px 8px", fontSize: 12, color: THEME.red }}>
+            {error}
+          </div>
+        )}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
@@ -625,7 +638,7 @@ function PhotosTab({ teamId, currentUser }) {
             whiteSpace: "nowrap",
           }}
         >
-          {uploading ? `Uploading ${progress}%` : "📷 Add Photo"}
+          {uploading ? "Processing…" : "📷 Add Photo"}
         </button>
         <input
           value={caption}
