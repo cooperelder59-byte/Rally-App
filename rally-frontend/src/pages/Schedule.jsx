@@ -18,12 +18,12 @@ const TEXT     = '#FFFFFF';
 const MUTED    = '#6B6B6B';
 
 const TYPE_META = {
-  practice:   { color: '#4F46E5', label: 'Practice'   },
-  game:       { color: '#EF4444', label: 'Game'       },
-  meeting:    { color: '#22C55E', label: 'Meeting'    },
-  tournament: { color: '#F97316', label: 'Tournament' },
-  training:   { color: '#38BDF8', label: 'Training'   },
-  other:      { color: '#6B7280', label: 'Other'      },
+  practice:   { color: '#B3F500', label: 'Practice'   },
+  game:       { color: '#B3F500', label: 'Game'       },
+  meeting:    { color: '#B3F500', label: 'Meeting'    },
+  tournament: { color: '#B3F500', label: 'Tournament' },
+  training:   { color: '#B3F500', label: 'Training'   },
+  other:      { color: '#B3F500', label: 'Other'      },
 };
 const EVENT_TYPES = Object.keys(TYPE_META);
 
