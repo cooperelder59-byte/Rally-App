@@ -282,6 +282,110 @@ function AnnouncementFeed({ teamId, currentUser }) {
   );
 }
 
+// ─── Members Component ──────────────────────────────────────────────────
+function MemberCard({ member }) {
+  const role = member.role || "member";
+  const roleColor = role === "admin" ? THEME.lime : THEME.muted;
+
+  return (
+    <div style={{
+      padding: "12px 14px",
+      borderBottom: `1px solid ${THEME.border}`,
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      justifyContent: "space-between",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+        <Avatar name={member.name || member.email} size={40} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontWeight: 600,
+            fontSize: 14,
+            color: THEME.text,
+            marginBottom: 3,
+          }}>
+            {member.name || member.email || "Unknown"}
+          </div>
+          <div style={{
+            fontSize: 12,
+            color: THEME.muted,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}>
+            {member.email}
+          </div>
+        </div>
+      </div>
+      <div style={{
+        fontSize: 11,
+        fontWeight: 800,
+        color: roleColor,
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+      }}>
+        {role}
+      </div>
+    </div>
+  );
+}
+
+function MembersTab({ teamId }) {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!teamId) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const q = query(
+      collection(db, "teams", teamId, "members"),
+      orderBy("joinedAt", "desc")
+    );
+
+    const unsub = onSnapshot(q, snapshot => {
+      setMembers(
+        snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+      );
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, [teamId]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "16px 0",
+      }}>
+        {loading && (
+          <p style={{
+            color: THEME.muted,
+            fontSize: 14,
+            textAlign: "center",
+            marginTop: 40,
+          }}>
+            Loading members…
+          </p>
+        )}
+        {!loading && members.length === 0 && <EmptyState message="No members yet" description="Invite teammates to get started" />}
+        {members.map(member => (
+          <MemberCard key={member.id} member={member} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Placeholder Tab Component ───────────────────────────────────────────
 function PlaceholderTab({ label }) {
   return (
@@ -386,7 +490,9 @@ function ContentPanel({ activeTab, currentTeam, currentUser }) {
       {activeTab === "announcements" && (
         <AnnouncementFeed teamId={currentTeam?.id} currentUser={currentUser} />
       )}
-      {activeTab === "members" && <PlaceholderTab label="Members" />}
+      {activeTab === "members" && (
+        <MembersTab teamId={currentTeam?.id} />
+      )}
       {activeTab === "photos" && <PlaceholderTab label="Photos" />}
       {activeTab === "team-info" && <PlaceholderTab label="Team Info" />}
     </div>
