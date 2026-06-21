@@ -17,11 +17,12 @@ export default function Messages() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [convoName, setConvoName] = useState('');
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
   const currentUser = auth.currentUser;
 
-  // Load conversations for the CURRENT TEAM only
+  // Load conversations for the current team
   useEffect(() => {
     if (!currentUser || !currentTeam?.id) {
       setConversations([]);
@@ -37,7 +38,7 @@ export default function Messages() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const convos = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(d => ({ id: d.id, ...d.data() }))
         .filter(c => c.type === 'announcement' || c.participants?.includes(currentUser.uid));
       setConversations(convos);
       setActiveConvo(prev => {
@@ -49,21 +50,16 @@ export default function Messages() {
     return () => unsubscribe();
   }, [currentUser, currentTeam?.id]);
 
-  // Load messages for the active conversation
+  // Load messages for active conversation
   useEffect(() => {
-    if (!activeConvo) {
-      setMessages([]);
-      return;
-    }
-
+    if (!activeConvo) { setMessages([]); return; }
     const q = query(
       collection(db, 'conversations', activeConvo.id, 'messages'),
       orderBy('createdAt', 'asc')
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setMessages(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-
     return () => unsubscribe();
   }, [activeConvo]);
 
@@ -74,39 +70,62 @@ export default function Messages() {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeConvo || !currentUser) return;
-
     const text = newMessage.trim();
     setNewMessage('');
-
     await addDoc(collection(db, 'conversations', activeConvo.id, 'messages'), {
       text,
       senderId: currentUser.uid,
       senderName: currentUser.displayName || currentUser.email,
       createdAt: serverTimestamp()
     });
-
     await updateDoc(doc(db, 'conversations', activeConvo.id), {
       lastMessage: text,
       lastMessageAt: serverTimestamp()
     });
   };
 
-  // Load team members when opening "new conversation"
+  // Load team members by reading the team doc fresh from Firestore
+  // so we always have memberIds even if currentTeam context is stale
   const openNewConvo = async () => {
-    if (!currentTeam) return;
+    if (!currentTeam?.id) return;
     setShowNewConvo(true);
     setSelectedMembers([]);
     setConvoName('');
+    setTeamMembers([]);
+    setLoadingMembers(true);
 
-    const memberDocs = await Promise.all(
-      (currentTeam.memberIds || [])
-        .filter(uid => uid !== currentUser.uid)
-        .map(async (uid) => {
-          const snap = await getDoc(doc(db, 'users', uid));
-          return snap.exists() ? { uid, ...snap.data() } : null;
+    try {
+      // Read team doc directly to get fresh memberIds
+      const teamSnap = await getDoc(doc(db, 'teams', currentTeam.id));
+      if (!teamSnap.exists()) { setLoadingMembers(false); return; }
+
+      const memberIds = teamSnap.data().memberIds || [];
+      const otherIds = memberIds.filter(uid => uid !== currentUser.uid);
+
+      if (otherIds.length === 0) { setLoadingMembers(false); return; }
+
+      const userDocs = await Promise.all(
+        otherIds.map(uid => getDoc(doc(db, 'users', uid)))
+      );
+
+      const members = userDocs
+        .map((snap, i) => {
+          if (!snap.exists()) return null;
+          const data = snap.data();
+          return {
+            uid: otherIds[i],
+            name: data.name || data.displayName || null,
+            email: data.email || null,
+          };
         })
-    );
-    setTeamMembers(memberDocs.filter(Boolean));
+        .filter(Boolean);
+
+      setTeamMembers(members);
+    } catch (err) {
+      console.error('Failed to load members:', err);
+    } finally {
+      setLoadingMembers(false);
+    }
   };
 
   const toggleMember = (uid) => {
@@ -126,11 +145,11 @@ export default function Messages() {
     if (!name) {
       if (type === 'direct') {
         const other = teamMembers.find(m => m.uid === selectedMembers[0]);
-        name = other?.name || 'Direct message';
+        name = other?.name || other?.email || 'Direct message';
       } else {
         name = teamMembers
           .filter(m => selectedMembers.includes(m.uid))
-          .map(m => m.name)
+          .map(m => m.name || m.email)
           .join(', ');
       }
     }
@@ -155,17 +174,11 @@ export default function Messages() {
       <div className="convo-list">
         <div className="convo-list-header">
           <h2 className="convo-list-title">Messages</h2>
-          <button className="new-convo-btn" onClick={openNewConvo} title="New conversation">
-            +
-          </button>
+          <button className="new-convo-btn" onClick={openNewConvo} title="New conversation">+</button>
         </div>
 
-        {!currentTeam && (
-          <p className="convo-empty">Select a team to see messages</p>
-        )}
-        {currentTeam && conversations.length === 0 && (
-          <p className="convo-empty">No conversations yet</p>
-        )}
+        {!currentTeam && <p className="convo-empty">Select a team to see messages</p>}
+        {currentTeam && conversations.length === 0 && <p className="convo-empty">No conversations yet</p>}
         {conversations.map((c) => (
           <button
             key={c.id}
@@ -183,7 +196,6 @@ export default function Messages() {
         {activeConvo ? (
           <>
             <div className="chat-header">{activeConvo.name}</div>
-
             <div className="chat-messages">
               {messages.map((m) => (
                 <div
@@ -198,7 +210,6 @@ export default function Messages() {
               ))}
               <div ref={messagesEndRef} />
             </div>
-
             <form className="chat-input-row" onSubmit={handleSend}>
               <input
                 type="text"
@@ -218,12 +229,11 @@ export default function Messages() {
         )}
       </div>
 
-      {/* NEW CONVERSATION MODAL */}
+      {/* New conversation modal */}
       {showNewConvo && (
         <div className="modal-overlay" onClick={() => setShowNewConvo(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h3>New conversation</h3>
-
             <form onSubmit={handleCreateConvo}>
               <input
                 type="text"
@@ -234,19 +244,40 @@ export default function Messages() {
               />
 
               <div className="member-list">
-                {teamMembers.length === 0 && (
+                {loadingMembers && (
+                  <p className="convo-empty">Loading members…</p>
+                )}
+                {!loadingMembers && teamMembers.length === 0 && (
                   <p className="convo-empty">No other team members yet</p>
                 )}
-                {teamMembers.map((m) => (
-                  <label key={m.uid} className="member-item">
-                    <input
-                      type="checkbox"
-                      checked={selectedMembers.includes(m.uid)}
-                      onChange={() => toggleMember(m.uid)}
-                    />
-                    {m.name || m.email}
-                  </label>
-                ))}
+                {!loadingMembers && teamMembers.map((m) => {
+                  const selected = selectedMembers.includes(m.uid);
+                  return (
+                    <div
+                      key={m.uid}
+                      onClick={() => toggleMember(m.uid)}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        marginBottom: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: selected ? 'rgba(179,245,0,0.1)' : 'transparent',
+                        border: selected ? '1px solid rgba(179,245,0,0.4)' : '1px solid transparent',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>
+                        {m.name || m.email}
+                      </span>
+                      {m.name && (
+                        <span style={{ fontSize: 12, color: '#6B6B6B' }}>{m.email}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="modal-actions">
@@ -261,7 +292,6 @@ export default function Messages() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
