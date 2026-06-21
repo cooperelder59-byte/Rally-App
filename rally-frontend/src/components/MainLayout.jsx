@@ -1,9 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
 import '../styles/mainlayout.css';
+
+export default function Sidebar({ open }) {
+  const navigate = useNavigate();
 
 // Constants
 const NAV_ITEMS = [
