@@ -7,10 +7,11 @@ import { useTeam } from '../context/TeamContext';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard',   icon: '▦' },
-  { path: '/messages',  label: 'Messages',    icon: '◻' },
-  { path: '/schedule',  label: 'Schedule',    icon: '◫' },
-  { path: '/performance', label: 'Performance', icon: '◈' },
+  { path: '/dashboard',   label: 'Dashboard'   },
+  { path: '/messages',    label: 'Messages'    },
+  { path: '/schedule',    label: 'Schedule'    },
+  { path: '/roster',      label: 'Roster'      },
+  { path: '/performance', label: 'Performance' },
 ];
 
 const PRIMARY = '#c8ff3d';
@@ -81,9 +82,6 @@ function SidebarNav({ activePath }) {
               ...(isActive ? styles.navLinkActive : {}),
             }}
           >
-            <span style={{ ...styles.navIcon, ...(isActive ? styles.navIconActive : {}) }}>
-              {item.icon}
-            </span>
             {item.label}
             {isActive && <span style={styles.navActivePip} />}
           </Link>

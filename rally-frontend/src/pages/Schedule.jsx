@@ -1,29 +1,29 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   addDoc, collection, deleteDoc, doc,
-  onSnapshot, query, serverTimestamp,
-  updateDoc, getDoc, where,
+  onSnapshot, serverTimestamp,
+  updateDoc, getDoc,
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
-const LIME   = '#B3F500';
-const BG     = '#0D0D0D';
-const SURFACE  = '#1A1A1A';
-const SURFACE2 = '#222222';
-const BORDER   = '#2A2A2A';
-const TEXT     = '#FFFFFF';
-const MUTED    = '#6B6B6B';
+const PRIMARY  = '#c8ff3d';
+const BG       = '#0f0f0f';
+const SURFACE  = '#161616';
+const SURFACE2 = '#1e1e1e';
+const BORDER   = '#222';
+const TEXT     = '#e8e8e8';
+const MUTED    = '#555';
 
 const TYPE_META = {
-  practice:   { color: '#B3F500', label: 'Practice'   },
-  game:       { color: '#B3F500', label: 'Game'       },
-  meeting:    { color: '#B3F500', label: 'Meeting'    },
-  tournament: { color: '#B3F500', label: 'Tournament' },
-  training:   { color: '#B3F500', label: 'Training'   },
-  other:      { color: '#B3F500', label: 'Other'      },
+  practice:   { color: '#c8ff3d', label: 'Practice'   },
+  game:       { color: '#3df5ff', label: 'Game'       },
+  meeting:    { color: '#a78bfa', label: 'Meeting'    },
+  tournament: { color: '#fb923c', label: 'Tournament' },
+  training:   { color: '#34d399', label: 'Training'   },
+  other:      { color: '#94a3b8', label: 'Other'      },
 };
 const EVENT_TYPES = Object.keys(TYPE_META);
 
@@ -49,9 +49,9 @@ const lbl = {
 };
 const inp = {
   width: '100%', padding: '10px 12px', borderRadius: 8,
-  border: `1.5px solid ${BORDER}`, fontSize: 14, color: TEXT,
+  border: `1px solid ${BORDER}`, fontSize: 14, color: TEXT,
   background: SURFACE2, boxSizing: 'border-box', outline: 'none',
-  fontFamily: 'inherit',
+  fontFamily: 'inherit', transition: 'border-color .15s',
 };
 
 // ─── Resize image to base64 ───────────────────────────────────────────────────
@@ -82,12 +82,27 @@ function Avatar({ name, size = 30 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: LIME, color: '#000',
+      background: PRIMARY, color: '#000',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontWeight: 800, fontSize: size * 0.36, flexShrink: 0,
     }}>
       {initials}
     </div>
+  );
+}
+
+// ─── Type Badge ───────────────────────────────────────────────────────────────
+function TypeBadge({ type }) {
+  const color = typeColor(type);
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 800,
+      color, textTransform: 'uppercase', letterSpacing: '0.08em',
+      background: color + '18',
+      padding: '3px 7px', borderRadius: 4,
+    }}>
+      {typeLabel(type)}
+    </span>
   );
 }
 
@@ -104,29 +119,25 @@ function RsvpButtons({ eventId, teamId, currentUser, rsvps = {} }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 6 }}>
-      <button
-        onClick={(e) => { e.stopPropagation(); setRsvp('going'); }}
-        style={{
-          padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800,
-          border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-          background: myRsvp === 'going' ? '#22C55E' : SURFACE2,
-          color: myRsvp === 'going' ? '#fff' : MUTED,
-        }}
-      >
-        ✓ Going
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); setRsvp('not_going'); }}
-        style={{
-          padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800,
-          border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-          background: myRsvp === 'not_going' ? '#EF4444' : SURFACE2,
-          color: myRsvp === 'not_going' ? '#fff' : MUTED,
-        }}
-      >
-        ✕ Not going
-      </button>
+    <div style={{ display: 'flex', gap: 5 }}>
+      {[
+        { status: 'going',     label: '✓ Going',     active: '#22c55e' },
+        { status: 'not_going', label: '✕ Not going', active: '#ef4444' },
+      ].map(({ status, label, active }) => (
+        <button
+          key={status}
+          onClick={(e) => { e.stopPropagation(); setRsvp(status); }}
+          style={{
+            padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+            border: myRsvp === status ? 'none' : `1px solid ${BORDER}`,
+            cursor: 'pointer', transition: 'all 0.15s',
+            background: myRsvp === status ? active : 'transparent',
+            color: myRsvp === status ? '#fff' : MUTED,
+          }}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -147,55 +158,64 @@ function AttendancePanel({ event, teamId, currentTeam, onClose }) {
     });
   }, [currentTeam]);
 
-  const rsvps = event.rsvps || {};
-  const going     = members.filter(m => rsvps[m.uid] === 'going');
-  const notGoing  = members.filter(m => rsvps[m.uid] === 'not_going');
-  const pending   = members.filter(m => !rsvps[m.uid]);
+  const rsvps   = event.rsvps || {};
+  const going    = members.filter(m => rsvps[m.uid] === 'going');
+  const notGoing = members.filter(m => rsvps[m.uid] === 'not_going');
+  const pending  = members.filter(m => !rsvps[m.uid]);
+
+  const sections = [
+    { label: 'Going',       list: going,    color: '#22c55e', icon: '✓' },
+    { label: 'Not going',   list: notGoing, color: '#ef4444', icon: '✕' },
+    { label: 'No response', list: pending,  color: MUTED,     icon: '·' },
+  ];
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, backdropFilter: 'blur(2px)' }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 60, backdropFilter: 'blur(3px)' }} />
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: 'min(360px, 100vw)',
-        background: BG, zIndex: 61,
+        background: SURFACE, zIndex: 61,
         display: 'flex', flexDirection: 'column',
         borderLeft: `1px solid ${BORDER}`,
-        boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
+        boxShadow: '-12px 0 48px rgba(0,0,0,0.6)',
       }}>
+        {/* Header */}
         <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 11, color: typeColor(event.type), fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-              {typeLabel(event.type)}
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>{event.title}</div>
+            <TypeBadge type={event.type} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: TEXT, marginTop: 8 }}>{event.title}</div>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 3 }}>
               {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               {event.startTime && ` · ${fmt12(event.startTime)}`}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: SURFACE, border: `1px solid ${BORDER}`, cursor: 'pointer', width: 30, height: 30, borderRadius: 8, fontSize: 18, color: MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+          <button onClick={onClose} style={{ background: SURFACE2, border: `1px solid ${BORDER}`, cursor: 'pointer', width: 30, height: 30, borderRadius: 8, fontSize: 18, color: MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-          {[
-            { label: 'Going', list: going, color: '#22C55E', icon: '✓' },
-            { label: 'Not going', list: notGoing, color: '#EF4444', icon: '✕' },
-            { label: 'No response', list: pending, color: MUTED, icon: '?' },
-          ].map(({ label, list, color, icon }) => (
-            list.length > 0 && (
-              <div key={label} style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
-                  {icon} {label} · {list.length}
-                </div>
-                {list.map(m => (
-                  <div key={m.uid} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
-                    <Avatar name={m.name} size={32} />
-                    <span style={{ fontSize: 14, color: TEXT, fontWeight: 500 }}>{m.name}</span>
-                  </div>
-                ))}
+        {/* Summary pills */}
+        <div style={{ display: 'flex', gap: 8, padding: '14px 20px', borderBottom: `1px solid ${BORDER}` }}>
+          {sections.map(({ label, list, color }) => (
+            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '8px 4px', background: SURFACE2, borderRadius: 8, border: `1px solid ${BORDER}` }}>
+              <div style={{ fontSize: 20, fontWeight: 900, color }}>{list.length}</div>
+              <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+          {sections.map(({ label, list, color, icon }) => list.length > 0 && (
+            <div key={label} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+                {icon} {label} · {list.length}
               </div>
-            )
+              {list.map(m => (
+                <div key={m.uid} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
+                  <Avatar name={m.name} size={30} />
+                  <span style={{ fontSize: 14, color: TEXT, fontWeight: 500 }}>{m.name}</span>
+                </div>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -205,11 +225,10 @@ function AttendancePanel({ event, teamId, currentTeam, onClose }) {
 
 // ─── Event Photos ─────────────────────────────────────────────────────────────
 function EventPhotos({ eventId, teamId }) {
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos]     = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [lightbox, setLightbox] = useState(null);
+  const [lightbox, setLightbox]  = useState(null);
   const fileRef = useRef();
-  const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (!teamId || !eventId) return;
@@ -226,6 +245,7 @@ function EventPhotos({ eventId, teamId }) {
     setUploading(true);
     try {
       const base64 = await resizeToBase64(file);
+      const currentUser = auth.currentUser;
       await addDoc(collection(db, 'teams', teamId, 'events', eventId, 'photos'), {
         url: base64,
         uploaderName: currentUser?.displayName || currentUser?.email || 'Someone',
@@ -236,15 +256,15 @@ function EventPhotos({ eventId, teamId }) {
   };
 
   return (
-    <div style={{ marginTop: 16 }}>
+    <div>
       {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.93)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <img src={lightbox} alt="Photo" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 8 }} />
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <img src={lightbox} alt="Photo" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 10 }} />
         </div>
       )}
 
       {photos.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 6, marginBottom: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 6, marginBottom: 10 }}>
           {photos.map(p => (
             <div key={p.id} onClick={() => setLightbox(p.url)} style={{ paddingBottom: '100%', position: 'relative', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: SURFACE2 }}>
               <img src={p.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -263,141 +283,94 @@ function EventPhotos({ eventId, teamId }) {
           fontSize: 12, color: MUTED, cursor: uploading ? 'default' : 'pointer',
           fontWeight: 600, transition: 'all 0.15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = LIME; e.currentTarget.style.color = LIME; }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = PRIMARY; e.currentTarget.style.color = PRIMARY; }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = MUTED; }}
       >
-        {uploading ? 'Uploading…' : 'Add photo'}
+        {uploading ? 'Uploading…' : '+ Add photo'}
       </button>
     </div>
   );
 }
 
 // ─── Event Row ────────────────────────────────────────────────────────────────
-function EventRow({ event, teamId, currentTeam, currentUser, onDelete, onAttendance }) {
-  const [expanded, setExpanded] = useState(false);
-  const date = new Date(event.date);
-  const color = typeColor(event.type);
-  const isOwner = event.createdBy === currentUser?.uid || currentTeam?.ownerId === currentUser?.uid;
-
-  return (
-    <div style={{
-      display: 'flex', gap: 0,
-      borderRadius: 12, overflow: 'hidden',
-      background: SURFACE, border: `1px solid ${BORDER}`,
-      marginBottom: 8, cursor: 'pointer',
-      transition: 'border-color 0.15s',
-    }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = '#3A3A3A'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = BORDER}
-    >
-      {/* Colored left bar */}
-      <div style={{ width: 4, background: color, flexShrink: 0 }} />
-
-      {/* Date block */}
-      <div
-        onClick={() => setExpanded(p => !p)}
-        style={{
-          minWidth: 56, padding: '16px 10px',
-          textAlign: 'center', borderRight: `1px solid ${BORDER}`,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1 }}>{date.getDate()}</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>
-          {date.toLocaleDateString('en-US', { month: 'short' })}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }} onClick={() => setExpanded(p => !p)}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            {typeLabel(event.type)}
-          </span>
-        </div>
-        <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, marginBottom: 4 }}>{event.title}</div>
-        <div style={{ fontSize: 12, color: MUTED, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <span>{dayName(date)}{event.startTime ? `, ${fmt12(event.startTime)}` : ''}{event.endTime ? ` – ${fmt12(event.endTime)}` : ''}</span>
-          {event.location && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>{event.location}</span>}
-        </div>
-      </div>
-
-      {/* Right actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', padding: '12px 14px', gap: 8, flexShrink: 0 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={(e) => { e.stopPropagation(); onAttendance(event); }}
-            title="See attendance"
-            style={{ background: SURFACE2, border: `1px solid ${BORDER}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: MUTED, cursor: 'pointer' }}
-          >
-            {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
-          </button>
-          {isOwner && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(event.id); }}
-              style={{ background: 'none', border: 'none', color: MUTED, fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '2px 4px' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
-              onMouseLeave={e => e.currentTarget.style.color = MUTED}
-            >×</button>
-          )}
-        </div>
-        <RsvpButtons eventId={event.id} teamId={teamId} currentUser={currentUser} rsvps={event.rsvps} />
-      </div>
-    </div>
-  );
-}
-
-// Add expanded section below if clicked
 function EventRowWithExpand({ event, teamId, currentTeam, currentUser, onDelete, onAttendance }) {
   const [expanded, setExpanded] = useState(false);
-  const date = new Date(event.date);
-  const color = typeColor(event.type);
+  const date    = new Date(event.date);
+  const color   = typeColor(event.type);
   const isOwner = event.createdBy === currentUser?.uid || currentTeam?.ownerId === currentUser?.uid;
+  const goingCount = Object.values(event.rsvps || {}).filter(v => v === 'going').length;
 
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ marginBottom: 6 }}>
+      {/* Card */}
       <div style={{
-        display: 'flex', gap: 0,
-        borderRadius: expanded ? '12px 12px 0 0' : 12, overflow: 'hidden',
-        background: SURFACE, border: `1px solid ${BORDER}`,
-        borderBottom: expanded ? 'none' : `1px solid ${BORDER}`,
-        transition: 'border-color 0.15s', cursor: 'pointer',
-      }}>
-        <div style={{ width: 4, background: color, flexShrink: 0 }} />
+        display: 'flex',
+        borderRadius: expanded ? '10px 10px 0 0' : 10,
+        overflow: 'hidden',
+        background: SURFACE,
+        border: `1px solid ${expanded ? '#2e2e2e' : BORDER}`,
+        borderBottom: expanded ? `1px solid ${SURFACE}` : undefined,
+        transition: 'border-color 0.15s',
+      }}
+        onMouseEnter={e => !expanded && (e.currentTarget.style.borderColor = '#333')}
+        onMouseLeave={e => !expanded && (e.currentTarget.style.borderColor = BORDER)}
+      >
+        {/* Color strip */}
+        <div style={{ width: 3, background: color, flexShrink: 0 }} />
 
+        {/* Date block */}
         <div
           onClick={() => setExpanded(p => !p)}
-          style={{ minWidth: 56, padding: '16px 10px', textAlign: 'center', borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            minWidth: 52, padding: '14px 8px',
+            textAlign: 'center', borderRight: `1px solid ${BORDER}`,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', userSelect: 'none',
+          }}
         >
-          <div style={{ fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1 }}>{date.getDate()}</div>
+          <div style={{ fontSize: 20, fontWeight: 900, color: TEXT, lineHeight: 1 }}>{date.getDate()}</div>
           <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>
             {date.toLocaleDateString('en-US', { month: 'short' })}
           </div>
         </div>
 
-        <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }} onClick={() => setExpanded(p => !p)}>
-          <div style={{ fontSize: 10, fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>
-            {typeLabel(event.type)}
+        {/* Main info */}
+        <div style={{ flex: 1, padding: '12px 14px', minWidth: 0, cursor: 'pointer' }} onClick={() => setExpanded(p => !p)}>
+          <div style={{ marginBottom: 4 }}>
+            <TypeBadge type={event.type} />
           </div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, marginBottom: 4 }}>{event.title}</div>
-          <div style={{ fontSize: 12, color: MUTED, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {event.title}
+          </div>
+          <div style={{ fontSize: 12, color: MUTED, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             <span>{dayName(date)}{event.startTime ? `, ${fmt12(event.startTime)}` : ''}{event.endTime ? ` – ${fmt12(event.endTime)}` : ''}</span>
-            {event.location && <span>{event.location}</span>}
+            {event.location && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ opacity: 0.5 }}>📍</span>{event.location}
+              </span>
+            )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', padding: '12px 14px', gap: 8, flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        {/* Actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', padding: '10px 12px', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
             <button
               onClick={(e) => { e.stopPropagation(); onAttendance(event); }}
-              style={{ background: SURFACE2, border: `1px solid ${BORDER}`, borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: MUTED, cursor: 'pointer' }}
+              style={{
+                background: SURFACE2, border: `1px solid ${BORDER}`,
+                borderRadius: 6, padding: '3px 9px',
+                fontSize: 11, fontWeight: 700, color: MUTED, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}
             >
-              {Object.values(event.rsvps || {}).filter(v => v === 'going').length} going
+              <span style={{ color: '#22c55e' }}>✓</span> {goingCount}
             </button>
             {isOwner && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(event.id); }}
-                style={{ background: 'none', border: 'none', color: MUTED, fontSize: 18, cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+                style={{ background: 'none', border: 'none', color: MUTED, fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', borderRadius: 4, transition: 'color .15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
                 onMouseLeave={e => e.currentTarget.style.color = MUTED}
               >×</button>
             )}
@@ -406,13 +379,17 @@ function EventRowWithExpand({ event, teamId, currentTeam, currentUser, onDelete,
         </div>
       </div>
 
+      {/* Expanded drawer */}
       {expanded && (
         <div style={{
-          background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `1px solid ${BORDER}`,
-          borderRadius: '0 0 12px 12px', padding: '14px 20px 16px 74px',
+          background: SURFACE,
+          border: `1px solid #2e2e2e`,
+          borderTop: `1px solid ${BORDER}`,
+          borderRadius: '0 0 10px 10px',
+          padding: '14px 16px 16px 68px',
         }}>
           {event.description && (
-            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#999', lineHeight: 1.6 }}>{event.description}</p>
+            <p style={{ margin: '0 0 14px', fontSize: 13, color: '#888', lineHeight: 1.65 }}>{event.description}</p>
           )}
           <EventPhotos eventId={event.id} teamId={teamId} />
         </div>
@@ -422,21 +399,19 @@ function EventRowWithExpand({ event, teamId, currentTeam, currentUser, onDelete,
 }
 
 // ─── Create Event Modal ───────────────────────────────────────────────────────
-function CreateEventModal({ onClose, onSubmit, prefillDate }) {
+function CreateEventModal({ onClose, onSubmit }) {
   const [formData, setFormData] = useState({
-    title: '', type: 'practice',
-    date: prefillDate ? prefillDate.toISOString().split('T')[0] : '',
+    title: '', type: 'practice', date: '',
     startTime: '', endTime: '', location: '', description: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
   const [saving, setSaving] = useState(false);
 
   function set(key, val) { setFormData(p => ({ ...p, [key]: val })); }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!formData.title.trim()) { setError('Title is required'); return; }
-    if (!formData.date) { setError('Date is required'); return; }
+    if (!formData.date)         { setError('Date is required'); return; }
     setError(''); setSaving(true);
     await onSubmit(formData);
     setSaving(false);
@@ -444,23 +419,32 @@ function CreateEventModal({ onClose, onSubmit, prefillDate }) {
 
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, backdropFilter: 'blur(3px)' }} onClick={onClose} />
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, backdropFilter: 'blur(4px)' }} onClick={onClose} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: 'min(480px, calc(100vw - 32px))',
-        background: BG, borderRadius: 16, zIndex: 101,
+        background: SURFACE, borderRadius: 14, zIndex: 101,
         border: `1px solid ${BORDER}`,
-        boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.8)',
         overflow: 'hidden',
       }} onClick={e => e.stopPropagation()}>
 
-        <div style={{ padding: '18px 22px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: TEXT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>New Event</h2>
-          <button onClick={onClose} style={{ background: SURFACE, border: `1px solid ${BORDER}`, cursor: 'pointer', width: 30, height: 30, borderRadius: 8, fontSize: 17, color: MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+        {/* Modal header */}
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 3, height: 18, borderRadius: 2, background: PRIMARY }} />
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: TEXT, textTransform: 'uppercase', letterSpacing: '0.08em' }}>New Event</h2>
+          </div>
+          <button onClick={onClose} style={{ background: SURFACE2, border: `1px solid ${BORDER}`, cursor: 'pointer', width: 28, height: 28, borderRadius: 7, fontSize: 16, color: MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: 22 }}>
-          {error && <div style={{ background: '#2A0000', color: '#EF4444', border: '1px solid #3D0000', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>{error}</div>}
+        <div style={{ padding: 20 }}>
+          {error && (
+            <div style={{ background: 'rgba(239,68,68,.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,.25)', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+              {error}
+            </div>
+          )}
 
           <div style={{ marginBottom: 14 }}>
             <label style={lbl}>Title *</label>
@@ -471,7 +455,9 @@ function CreateEventModal({ onClose, onSubmit, prefillDate }) {
             <div>
               <label style={lbl}>Type</label>
               <select value={formData.type} onChange={e => set('type', e.target.value)} style={inp}>
-                {EVENT_TYPES.map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
+                {EVENT_TYPES.map(t => (
+                  <option key={t} value={t}>{typeLabel(t)}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -496,20 +482,39 @@ function CreateEventModal({ onClose, onSubmit, prefillDate }) {
             <input type="text" value={formData.location} onChange={e => set('location', e.target.value)} placeholder="e.g. Field 3, Central Park" style={inp} />
           </div>
 
-          <div style={{ marginBottom: 22 }}>
+          <div style={{ marginBottom: 20 }}>
             <label style={lbl}>Notes</label>
             <textarea value={formData.description} onChange={e => set('description', e.target.value)} placeholder="Any extra details…" rows={3} style={{ ...inp, resize: 'vertical' }} />
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 10, background: SURFACE2, color: MUTED, border: `1px solid ${BORDER}`, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ flex: 2, padding: 11, borderRadius: 10, background: LIME, color: '#000', border: 'none', fontSize: 14, fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 9, background: SURFACE2, color: MUTED, border: `1px solid ${BORDER}`, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button type="button" onClick={handleSubmit} disabled={saving} style={{ flex: 2, padding: 11, borderRadius: 9, background: PRIMARY, color: '#000', border: 'none', fontSize: 13, fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Creating…' : 'Create Event'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+function EmptyState({ filter, onNew }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '80px 0' }}>
+      <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}>📅</div>
+      <div style={{ fontWeight: 800, fontSize: 15, color: '#333', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+        No {filter === 'past' ? 'past' : filter === 'upcoming' ? 'upcoming' : ''} events
+      </div>
+      {filter !== 'past' && (
+        <button onClick={onNew} style={{ marginTop: 8, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 18px', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          + Create one
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -517,25 +522,27 @@ function CreateEventModal({ onClose, onSubmit, prefillDate }) {
 export default function Schedule() {
   const { currentTeam } = useTeam();
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [events, setEvents]           = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [showCreate, setShowCreate]   = useState(false);
   const [attendanceEvent, setAttendanceEvent] = useState(null);
-  const [filter, setFilter] = useState('upcoming'); // upcoming | past | all
-  const [toast, setToast] = useState('');
+  const [filter, setFilter] = useState('upcoming');
+  const [toast, setToast]   = useState('');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => setCurrentUser(u));
     return () => unsub();
   }, []);
 
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  }
 
   useEffect(() => {
     if (!currentTeam?.id) { setEvents([]); setLoading(false); return; }
     setLoading(true);
-    const q = collection(db, 'teams', currentTeam.id, 'events');
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(collection(db, 'teams', currentTeam.id, 'events'), (snap) => {
       const list = snap.docs
         .map(d => ({ id: d.id, ...d.data(), date: d.data().date?.toDate?.() || new Date(d.data().date) }))
         .filter(e => e.status !== 'cancelled')
@@ -554,27 +561,28 @@ export default function Schedule() {
       startTime: formData.startTime, endTime: formData.endTime,
       location: formData.location.trim(), description: formData.description.trim(),
       createdBy: currentUser.uid, createdAt: serverTimestamp(),
-      status: 'active', rsvps: { [currentUser.uid]: 'going' },
+      status: 'active',
+      rsvps: { [currentUser.uid]: 'going' },
       rsvpNames: { [currentUser.uid]: currentUser.displayName || currentUser.email },
     });
     setShowCreate(false);
-    showToast('✓ Event created');
+    showToast('Event created');
   }
 
   async function handleDeleteEvent(eventId) {
     if (!window.confirm('Delete this event?')) return;
     await deleteDoc(doc(db, 'teams', currentTeam.id, 'events', eventId));
-    showToast('✓ Event deleted');
+    showToast('Event deleted');
   }
 
   const now = new Date();
   const filteredEvents = useMemo(() => {
-    if (filter === 'upcoming') return events.filter(e => new Date(e.date) >= new Date(now.setHours(0,0,0,0)));
-    if (filter === 'past')     return events.filter(e => new Date(e.date) < new Date()).reverse();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (filter === 'upcoming') return events.filter(e => new Date(e.date) >= today);
+    if (filter === 'past')     return [...events.filter(e => new Date(e.date) < today)].reverse();
     return events;
   }, [events, filter]);
 
-  // Group by month
   const grouped = useMemo(() => {
     const groups = {};
     filteredEvents.forEach(ev => {
@@ -586,75 +594,97 @@ export default function Schedule() {
   }, [filteredEvents]);
 
   if (!currentTeam) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: MUTED, fontSize: 15, background: BG }}>
-      Select a team to view the schedule
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 10 }}>
+      <div style={{ fontSize: 13, color: MUTED }}>Select a team to view the schedule</div>
     </div>
   );
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: TEXT }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '0 20px 80px' }}>
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: TEXT, minHeight: '100vh' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 0 80px' }}>
 
         {/* Toast */}
         {toast && (
-          <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: LIME, color: '#000', padding: '10px 22px', borderRadius: 99, fontSize: 14, fontWeight: 800, zIndex: 200, boxShadow: `0 4px 20px ${LIME}44` }}>
-            {toast}
+          <div style={{
+            position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+            background: PRIMARY, color: '#000',
+            padding: '10px 22px', borderRadius: 99,
+            fontSize: 13, fontWeight: 800, zIndex: 300,
+            boxShadow: `0 4px 24px ${PRIMARY}55`,
+            pointerEvents: 'none',
+          }}>
+            ✓ {toast}
           </div>
         )}
 
         {/* Header */}
-        <div style={{ padding: '28px 0 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div style={{ padding: '24px 0 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: LIME, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: PRIMARY, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
               {currentTeam.name}
             </div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 900, color: TEXT, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: TEXT, letterSpacing: '-0.02em' }}>
               Schedule
             </h1>
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            style={{ background: LIME, color: '#000', border: 'none', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 900, cursor: 'pointer', letterSpacing: '0.04em' }}
+            style={{
+              background: PRIMARY, color: '#000', border: 'none',
+              padding: '9px 18px', borderRadius: 9,
+              fontSize: 13, fontWeight: 800, cursor: 'pointer',
+              letterSpacing: '0.02em',
+            }}
           >
             + New Event
           </button>
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `1px solid ${BORDER}`, paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: `1px solid ${BORDER}` }}>
           {[['upcoming', 'Upcoming'], ['past', 'Past'], ['all', 'All']].map(([id, label]) => (
             <button
               key={id}
               onClick={() => setFilter(id)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                padding: '10px 16px', fontSize: 12, fontWeight: 800, letterSpacing: '0.06em',
-                color: filter === id ? LIME : MUTED,
-                borderBottom: filter === id ? `2px solid ${LIME}` : '2px solid transparent',
-                marginBottom: -1, transition: 'all 0.15s',
+                padding: '9px 14px', fontSize: 12, fontWeight: 700,
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                color: filter === id ? PRIMARY : MUTED,
+                borderBottom: filter === id ? `2px solid ${PRIMARY}` : '2px solid transparent',
+                marginBottom: -1, transition: 'color 0.15s',
               }}
             >
-              {label.toUpperCase()}
+              {label}
             </button>
           ))}
         </div>
 
-        {/* Event list */}
-        {loading && <div style={{ textAlign: 'center', padding: '60px 0', color: MUTED }}>Loading…</div>}
-
-        {!loading && grouped.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: MUTED }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}></div>
-            <div style={{ fontWeight: 800, fontSize: 16, color: '#444', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>No events</div>
-            <div style={{ fontSize: 13 }}>Hit "New Event" to get started</div>
-          </div>
+        {/* Content */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: MUTED, fontSize: 13 }}>Loading…</div>
         )}
 
-        {grouped.map(([month, evs]) => (
-          <div key={month} style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: LIME, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
-              {month} · {evs.length}
+        {!loading && grouped.length === 0 && (
+          <EmptyState filter={filter} onNew={() => setShowCreate(true)} />
+        )}
+
+        {!loading && grouped.map(([month, evs]) => (
+          <div key={month} style={{ marginBottom: 28 }}>
+            {/* Month header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              marginBottom: 10, paddingBottom: 8,
+              borderBottom: `1px solid ${BORDER}`,
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: PRIMARY, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                {month}
+              </span>
+              <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>
+                · {evs.length} event{evs.length !== 1 ? 's' : ''}
+              </span>
             </div>
+
             {evs.map(ev => (
               <EventRowWithExpand
                 key={ev.id}

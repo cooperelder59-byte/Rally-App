@@ -94,7 +94,7 @@ export default function Login() {
                 onClick={() => setShowPassword(p => !p)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? '🙈' : '👁'}
+                {showPassword ? '👁' : '👁'}
               </button>
             </div>
           </div>
