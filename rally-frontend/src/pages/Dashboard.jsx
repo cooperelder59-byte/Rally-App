@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  getDocs,
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
@@ -368,21 +369,65 @@ function MemberCard({ member }) {
   );
 }
 
-function MembersTab({ teamId }) {
+function MembersTab({ teamId, currentUser }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!teamId) { setMembers([]); setLoading(false); return; }
     setLoading(true);
-    const q = query(
-      collection(db, "teams", teamId, "members"),
-      orderBy("joinedAt", "desc")
-    );
-    const unsub = onSnapshot(q, snap => {
-      setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+    // Watch the team doc — members are stored as a memberIds array, not a subcollection
+    const unsub = onSnapshot(doc(db, "teams", teamId), async (teamSnap) => {
+      if (!teamSnap.exists()) { setMembers([]); setLoading(false); return; }
+
+      const data = teamSnap.data();
+      const memberIds = data.memberIds || [];
+      const ownerId = data.ownerId;
+
+      if (memberIds.length === 0) { setMembers([]); setLoading(false); return; }
+
+      // Fetch each user profile from the users collection
+      const userDocs = await Promise.all(
+        memberIds.map(uid => getDoc(doc(db, "users", uid)))
+      );
+
+      const resolved = userDocs.map((userSnap, i) => {
+        const uid = memberIds[i];
+        const profile = userSnap.exists() ? userSnap.data() : {};
+        return {
+          id: uid,
+          name: profile.displayName || profile.name || null,
+          email: profile.email || null,
+          photoURL: profile.photoURL || null,
+          role: uid === ownerId ? "admin" : "member",
+        };
+      });
+
+      // Fill in current user's info from auth if their Firestore profile is sparse
+      const filled = resolved.map(m => {
+        if (currentUser && m.id === currentUser.uid && !m.name && !m.email) {
+          return {
+            ...m,
+            name: currentUser.displayName || null,
+            email: currentUser.email || null,
+            photoURL: currentUser.photoURL || null,
+          };
+        }
+        return m;
+      });
+
+      // Owner first, then alphabetical
+      filled.sort((a, b) => {
+        if (a.role === "admin") return -1;
+        if (b.role === "admin") return 1;
+        return (a.name || a.email || "").localeCompare(b.name || b.email || "");
+      });
+
+      setMembers(filled);
       setLoading(false);
     });
+
     return () => unsub();
   }, [teamId]);
 
@@ -874,7 +919,7 @@ function ContentPanel({ activeTab, currentTeam, currentUser }) {
           <AnnouncementFeed teamId={currentTeam?.id} currentUser={currentUser} />
         )}
         {activeTab === "members" && (
-          <MembersTab teamId={currentTeam?.id} />
+          <MembersTab teamId={currentTeam?.id} currentUser={currentUser} />
         )}
         {activeTab === "photos" && (
           <PhotosTab teamId={currentTeam?.id} currentUser={currentUser} />
