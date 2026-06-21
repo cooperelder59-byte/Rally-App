@@ -6,9 +6,6 @@ import { auth } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
 import '../styles/mainlayout.css';
 
-export default function Sidebar({ open }) {
-  const navigate = useNavigate();
-
 // Constants
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard' },
