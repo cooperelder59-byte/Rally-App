@@ -5,13 +5,12 @@ import juniorSoccer from '../assets/junior-soccer.svg';
 
 // Constants
 const GREEN = '#c8ff3d';
-const STRIPE_PAYMENT_URL = 'https://buy.stripe.com/test_7sY5kw3JBaoR93UaRE3ks00';
 const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how-it-works' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'Contact', href: '#contact' },
   { label: 'About', href: '#about' }
 ];
 
@@ -90,52 +89,6 @@ const AUDIENCE = [
   {
     role: 'Schools & admins',
     description: 'One platform across every extracurricular group. Consistent, trackable, and easy to manage at scale.'
-  }
-];
-
-const PRICING_PLANS = [
-  {
-    tier: 'Free',
-    price: '$0',
-    description: 'For small teams just getting started.',
-    features: [
-      'Up to 20 members',
-      'Team messaging',
-      'Shared calendar',
-      'Basic attendance tracking'
-    ],
-    buttonText: 'Get started',
-    buttonVariant: 'ghost',
-    action: 'register'
-  },
-  {
-    tier: 'Team',
-    price: '$12',
-    description: 'For active teams running a full season.',
-    features: [
-      'Unlimited members',
-      'Payments & fee collection',
-      'Lineups & performance tracking',
-      'Priority support'
-    ],
-    buttonText: 'Get started',
-    buttonVariant: 'primary',
-    action: 'stripe',
-    featured: true
-  },
-  {
-    tier: 'School',
-    price: 'Custom',
-    description: 'For schools managing multiple teams.',
-    features: [
-      'Multiple teams & clubs',
-      'Admin dashboard',
-      'Custom roles & permissions',
-      'Dedicated onboarding'
-    ],
-    buttonText: 'Contact us',
-    buttonVariant: 'ghost',
-    action: 'email'
   }
 ];
 
@@ -370,60 +323,19 @@ function AboutSection() {
   );
 }
 
-// Pricing Card Component
-function PricingCard({ plan, onAction }) {
-  const handleClick = () => {
-    if (plan.action === 'register') {
-      onAction('/register');
-    } else if (plan.action === 'stripe') {
-      window.location.href = STRIPE_PAYMENT_URL;
-    } else if (plan.action === 'email') {
-      window.location.href = `mailto:${CONTACT_EMAIL}`;
-    }
-  };
-
+// Contact Section Component (replaces Pricing)
+function ContactSection() {
   return (
-    <div className={`pricing-card ${plan.featured ? 'featured' : ''}`}>
-      {plan.featured && <div className="pricing-badge">Most popular</div>}
-      <div className="pricing-tier">{plan.tier}</div>
-      <div className="pricing-price">
-        {plan.price}
-        {plan.price !== 'Custom' && <span>/mo</span>}
-      </div>
-      <p className="pricing-desc">{plan.description}</p>
-      <ul className="pricing-list">
-        {plan.features.map(feature => (
-          <li key={feature}>{feature}</li>
-        ))}
-      </ul>
-      <button 
-        onClick={handleClick}
-        className={`btn btn-${plan.buttonVariant} btn-full`}
-      >
-        {plan.buttonText}
-      </button>
-    </div>
-  );
-}
-
-// Pricing Section Component
-function PricingSection({ onNavigate }) {
-  return (
-    <section className="section section-dark" id="pricing">
-      <div className="container">
-        <div className="section-header">
-          <div className="eyebrow">Pricing</div>
-          <h2>Simple pricing.<br/>No surprises.</h2>
-        </div>
-        <div className="pricing-grid">
-          {PRICING_PLANS.map(plan => (
-            <PricingCard 
-              key={plan.tier} 
-              plan={plan} 
-              onAction={onNavigate}
-            />
-          ))}
-        </div>
+    <section className="section section-dark" id="contact">
+      <div className="container container-narrow" style={{ textAlign: 'center' }}>
+        <div className="eyebrow">Contact</div>
+        <h2>Get in touch.</h2>
+        <p className="waitlist-sub">
+          Questions about Rally, or want to bring it to your school or club? We'd love to hear from you.
+        </p>
+        <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-primary btn-full" style={{ maxWidth: '320px', margin: '0 auto', display: 'block' }}>
+          Contact us
+        </a>
       </div>
     </section>
   );
@@ -487,7 +399,7 @@ export default function Landing() {
       <HowItWorks />
       <AudienceSection />
       <AboutSection />
-      <PricingSection onNavigate={handleNavigation} />
+      <ContactSection />
       <CTASection onNavigate={handleNavigation} />
       <Footer />
     </div>
