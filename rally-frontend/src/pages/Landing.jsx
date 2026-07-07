@@ -5,12 +5,10 @@ import juniorSoccer from '../assets/junior-soccer.svg';
 
 // Constants
 const GREEN = '#c8ff3d';
-const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how-it-works' },
-  { label: 'Contact', href: '#contact' },
   { label: 'About', href: '#about' }
 ];
 
@@ -313,25 +311,6 @@ function AboutSection() {
   );
 }
 
-// Contact Section Component — simple info, no CTA button
-function ContactSection() {
-  return (
-    <section className="section section-dark" id="contact">
-      <div className="container container-narrow" style={{ textAlign: 'center' }}>
-        <div className="eyebrow">Contact</div>
-        <h2>Get in touch.</h2>
-        <p className="waitlist-sub" style={{ marginBottom: 0 }}>
-          Questions about Rally, or want to bring it to your school or club?
-          Reach out at{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="accent" style={{ textDecoration: 'underline' }}>
-            {CONTACT_EMAIL}
-          </a>.
-        </p>
-      </div>
-    </section>
-  );
-}
-
 // CTA Section Component
 function CTASection({ onNavigate }) {
   return (
@@ -391,7 +370,6 @@ export default function Landing() {
       <AudienceSection />
       <AboutSection />
       <CTASection onNavigate={handleNavigation} />
-      <ContactSection />
       <Footer />
     </div>
   );
