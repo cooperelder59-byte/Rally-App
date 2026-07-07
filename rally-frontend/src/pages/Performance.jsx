@@ -33,6 +33,22 @@ const EMPTY_STATS = {
   fouls: 0,
 };
 
+function initialsOf(name) {
+  return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+function Avatar({ name, size = 32 }) {
+  return (
+    <div
+      className="player-avatar"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {initialsOf(name)}
+    </div>
+  );
+}
+
 // ─── Edit Stats Modal ──────────────────────────────────────────────────────────
 function EditStatsModal({ player, onClose, onSave }) {
   const [form, setForm] = useState({ ...EMPTY_STATS, ...player.stats });
@@ -78,9 +94,9 @@ function EditStatsModal({ player, onClose, onSave }) {
       >
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: SURFACE }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 3, height: 18, borderRadius: 2, background: PRIMARY }} />
-            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: TEXT, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Edit Stats — {player.name}
+            <Avatar name={player.name} size={28} />
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: TEXT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {player.name}
             </h2>
           </div>
           <button onClick={onClose} style={{ background: SURFACE2, border: `1px solid ${BORDER}`, cursor: 'pointer', width: 28, height: 28, borderRadius: 7, fontSize: 16, color: MUTED, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
@@ -251,6 +267,10 @@ export default function Performance() {
     }, { merge: true });
   }, [currentTeam?.id]);
 
+  const gridCols = canEditStats
+    ? '2.2fr 1fr 0.8fr 0.8fr 0.8fr 0.9fr 0.7fr'
+    : '2.2fr 1fr 0.8fr 0.8fr 0.8fr 0.9fr';
+
   if (loading) {
     return <div className="performance-page"><p>Loading performance data...</p></div>;
   }
@@ -295,28 +315,32 @@ export default function Performance() {
 
       {/* PLAYER STATS TABLE — every player on the roster, stats or not */}
       <div className="players-section">
-        <h2>Player Statistics</h2>
+        <div className="players-section-header">
+          <h2>Player Statistics</h2>
+          <span className="players-count">{players.length} player{players.length !== 1 ? 's' : ''}</span>
+        </div>
 
         {players.length === 0 ? (
           <p className="empty-state">No players on this roster yet</p>
         ) : (
           <div className="stats-table">
-            <div className="table-header">
+            <div className="table-header" style={{ gridTemplateColumns: gridCols }}>
               <div className="col-player">Player</div>
               <div className="col-stat">Position</div>
               <div className="col-stat">Apps</div>
               <div className="col-stat">Goals</div>
               <div className="col-stat">Assists</div>
               <div className="col-stat">Rating</div>
-              {canEditStats && <div className="col-stat">Edit</div>}
+              {canEditStats && <div className="col-stat">&nbsp;</div>}
             </div>
 
             {players.map((player) => (
-              <div key={player.uid} className="table-row">
+              <div key={player.uid} className="table-row" style={{ gridTemplateColumns: gridCols }}>
                 <div className="col-player">
+                  <Avatar name={player.name} />
                   <div className="player-name">{player.name}</div>
                 </div>
-                <div className="col-stat">{player.stats?.position || '—'}</div>
+                <div className="col-stat">{player.stats?.position || <span className="dim">—</span>}</div>
                 <div className="col-stat">{player.stats?.appearances || 0}</div>
                 <div className="col-stat">
                   <span className="stat-highlight">{player.stats?.goals || 0}</span>
@@ -346,7 +370,10 @@ export default function Performance() {
             {players.slice(0, 3).map((player) => (
               <div key={player.uid} className="stat-column-card">
                 <div className="stat-column-header">
-                  <h3>{player.name}</h3>
+                  <div className="stat-column-player">
+                    <Avatar name={player.name} size={30} />
+                    <h3>{player.name}</h3>
+                  </div>
                   {canEditStats && (
                     <button className="edit-stats-btn" onClick={() => setEditingPlayer(player)}>
                       Edit

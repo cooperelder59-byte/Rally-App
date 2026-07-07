@@ -11,20 +11,20 @@
 
 /* Header */
 .perf-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .perf-header h1 {
   font-size: 28px;
   font-weight: 700;
-  margin: 0 0 0.5rem;
-  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.01em;
   color: #f2f2f2;
 }
 
 .perf-header p {
   font-size: 14px;
-  color: #777777;
+  color: #7a7a7a;
   margin: 0;
 }
 
@@ -33,42 +33,42 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
 .stat-card {
   background: #101010;
   border: 1px solid #1e1e1e;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 1.5rem;
   text-align: center;
-  transition: all 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
 }
 
 .stat-card:hover {
-  background: #131313;
   border-color: #2a2a2a;
+  transform: translateY(-1px);
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #777777;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 0.75rem;
-  font-weight: 500;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.65rem;
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 800;
   color: #c8ff3d;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.02em;
 }
 
 .stat-change {
   font-size: 12px;
-  color: #777777;
+  color: #6a6a6a;
   margin: 0;
 }
 
@@ -76,16 +76,29 @@
 .players-section {
   background: #101010;
   border: 1px solid #1e1e1e;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 1.5rem;
-  margin-bottom: 2rem;
+}
+
+.players-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
 }
 
 .players-section h2 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 1rem;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
   color: #f2f2f2;
+  letter-spacing: 0.01em;
+}
+
+.players-count {
+  font-size: 12px;
+  color: #6a6a6a;
+  font-weight: 500;
 }
 
 /* Stats Table */
@@ -95,25 +108,21 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 2px solid #1e1e1e;
-  font-weight: 600;
-  font-size: 12px;
+  padding: 0 0.25rem 0.85rem;
+  border-bottom: 1px solid #1e1e1e;
+  font-weight: 700;
+  font-size: 11px;
   text-transform: uppercase;
-  color: #777777;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
+  color: #6a6a6a;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
 }
 
-.table-header:has(+ .table-row .col-stat:last-child .edit-stats-btn),
-.table-row:has(.edit-stats-btn) {
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-}
-
-.col-player,
-.col-stat {
+.col-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   text-align: left;
 }
 
@@ -123,22 +132,44 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #1e1e1e;
+  padding: 0.75rem 0.25rem;
+  border-bottom: 1px solid #161616;
   align-items: center;
-  transition: background 0.2s;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.table-row:last-child {
+  border-bottom: none;
 }
 
 .table-row:hover {
-  background: #131313;
-  border-radius: 4px;
+  background: #141414;
+}
+
+.player-avatar {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c8ff3d, #7aaa00);
+  color: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
 .player-name {
-  font-weight: 500;
+  font-weight: 600;
   color: #f2f2f2;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dim {
+  color: #4a4a4a;
 }
 
 .stat-highlight {
@@ -148,51 +179,50 @@
 }
 
 .rating {
-  background: #131313;
+  display: inline-block;
+  background: #161616;
   color: #f2f2f2;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid #1e1e1e;
-  font-weight: 600;
-  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid #262626;
+  font-weight: 700;
+  font-size: 11.5px;
 }
 
 .empty-state {
   text-align: center;
-  padding: 2rem;
-  color: #777777;
-  font-size: 14px;
+  padding: 2.5rem 1rem;
+  color: #6a6a6a;
+  font-size: 13.5px;
 }
 
 /* Edit button (coaches / admin only) */
 .edit-stats-btn {
-  background: none;
+  background: transparent;
   border: 1px solid #2a2a2a;
   border-radius: 6px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   font-size: 11px;
   font-weight: 700;
-  color: #999;
+  color: #8a8a8a;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
   white-space: nowrap;
 }
 
 .edit-stats-btn:hover {
   border-color: #c8ff3d;
   color: #c8ff3d;
+  background: rgba(200, 255, 61, 0.06);
 }
 
 /* Advanced Stats */
-.detail-stats {
-  margin-bottom: 2rem;
-}
-
 .detail-stats h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   margin: 0 0 1rem;
   color: #f2f2f2;
+  letter-spacing: 0.01em;
 }
 
 .stats-columns {
@@ -204,29 +234,39 @@
 .stat-column-card {
   background: #101010;
   border: 1px solid #1e1e1e;
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-radius: 10px;
+  padding: 1.35rem 1.5rem;
   border-left: 3px solid #c8ff3d;
-  transition: all 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
 }
 
 .stat-column-card:hover {
-  background: #131313;
   border-color: #2a2a2a;
+  transform: translateY(-1px);
 }
 
 .stat-column-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.stat-column-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .stat-column-card h3 {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 700;
   margin: 0;
   color: #f2f2f2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stat-list {
@@ -235,16 +275,16 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
 .stat-list li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #1e1e1e;
-  font-size: 13px;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 12.5px;
 }
 
 .stat-list li:last-child {
@@ -258,7 +298,7 @@
 
 .stat-list strong {
   color: #f2f2f2;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Responsive */
@@ -269,15 +309,18 @@
 
   .table-header,
   .table-row {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 2fr 1fr 1fr !important;
   }
 
-  .col-stat {
+  .col-stat:nth-child(4),
+  .col-stat:nth-child(5),
+  .col-stat:nth-child(6),
+  .col-stat:nth-child(7) {
     display: none;
   }
 
-  .col-stat:nth-child(1),
-  .col-stat:nth-child(2) {
+  .col-stat:nth-child(2),
+  .col-stat:nth-child(3) {
     display: block;
   }
 }
