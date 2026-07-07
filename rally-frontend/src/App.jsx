@@ -10,6 +10,7 @@ import Messages from './pages/Messages';
 import Schedule from './pages/Schedule';
 import Performance from './pages/Performance';
 import Roster from './pages/Roster';
+import UserSettings from './pages/UserSettings';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/roster" element={<Roster />} />
             <Route path="/performance" element={<Performance />} />
+            <Route path="/settings" element={<UserSettings />} />
           </Route>
 
         </Routes>
