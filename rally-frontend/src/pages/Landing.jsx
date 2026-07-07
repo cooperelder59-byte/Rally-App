@@ -44,16 +44,6 @@ const FEATURES = [
   },
   {
     type: 'card',
-    label: 'Payments',
-    description: 'Collect fees for uniforms, trips, and tournaments. Tracked, simple, no cash required.'
-  },
-  {
-    type: 'card',
-    label: 'Lineups & tools',
-    description: 'Build lineups, assign positions, and manage your squad directly in the platform.'
-  },
-  {
-    type: 'card',
     label: 'Member management',
     description: 'Rosters, roles, and permissions for coaches, admins, and players — all in one place.'
   }
@@ -68,12 +58,12 @@ const STEPS = [
   {
     num: '02',
     title: 'Set up your season',
-    description: 'Add your schedule, configure payment items, and get your roster sorted before the season kicks off.'
+    description: 'Add your schedule and get your roster sorted before the season kicks off.'
   },
   {
     num: '03',
     title: 'Run your group',
-    description: 'Post updates, track attendance, collect payments, and keep everyone organised all season long.'
+    description: 'Post updates, track attendance, and keep everyone organised all season long.'
   }
 ];
 
@@ -316,7 +306,7 @@ function AboutSection() {
       <div className="container container-narrow">
         <div className="eyebrow">About Rally</div>
         <h2>Built for school sports and clubs.</h2>
-        <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, attendance, and payments.</p>
+        <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, and attendance.</p>
         <p>Create your team, invite your players, and get your season organised in minutes.</p>
       </div>
     </section>
@@ -333,9 +323,13 @@ function ContactSection() {
         <p className="waitlist-sub">
           Questions about Rally, or want to bring it to your school or club? We'd love to hear from you.
         </p>
-        <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-primary btn-full" style={{ maxWidth: '320px', margin: '0 auto', display: 'block' }}>
+        <button
+          onClick={() => { window.location.href = `mailto:${CONTACT_EMAIL}`; }}
+          className="btn btn-primary btn-full"
+          style={{ maxWidth: '320px', margin: '0 auto', display: 'block' }}
+        >
           Contact us
-        </a>
+        </button>
       </div>
     </section>
   );
