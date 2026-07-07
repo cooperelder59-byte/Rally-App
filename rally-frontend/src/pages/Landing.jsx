@@ -393,8 +393,8 @@ export default function Landing() {
       <HowItWorks />
       <AudienceSection />
       <AboutSection />
-      <ContactSection />
       <CTASection onNavigate={handleNavigation} />
+      <ContactSection />
       <Footer />
     </div>
   );
