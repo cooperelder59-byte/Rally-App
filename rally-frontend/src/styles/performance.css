@@ -72,75 +72,6 @@
   margin: 0;
 }
 
-/* Chart Section */
-.chart-section {
-  background: #101010;
-  border: 1px solid #1e1e1e;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.chart-section h2 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 1.5rem;
-  color: #f2f2f2;
-}
-
-.results-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2rem;
-  height: 200px;
-}
-
-.bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.bar-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-}
-
-.bar-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #c8ff3d;
-}
-
-.bar {
-  width: 80px;
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem 0.5rem;
-}
-
-.bar.wins {
-  background: rgba(76, 175, 80, 0.1);
-  height: 180px;
-}
-
-.bar.draws {
-  background: rgba(255, 193, 7, 0.1);
-  height: 100px;
-}
-
-.bar.losses {
-  background: rgba(244, 67, 54, 0.1);
-  height: 60px;
-}
-
 /* Players Section */
 .players-section {
   background: #101010;
@@ -226,28 +157,6 @@
   padding: 2rem;
   color: #777777;
   font-size: 14px;
-}
-
-/* Paywall */
-.paywall {
-  background: #101010;
-  border: 1px solid #1e1e1e;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.paywall-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #f2f2f2;
-  margin-bottom: 0.75rem;
-}
-
-.paywall-sub {
-  color: #777777;
-  margin-bottom: 1.25rem;
 }
 
 /* Advanced Stats */
@@ -339,13 +248,5 @@
   .col-stat:nth-child(1),
   .col-stat:nth-child(2) {
     display: block;
-  }
-
-  .results-chart {
-    gap: 1rem;
-  }
-
-  .bar {
-    width: 60px;
   }
 }

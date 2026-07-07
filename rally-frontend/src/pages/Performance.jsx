@@ -2,10 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
-import useSubscriptionStatus from '../hooks/useSubscriptionStatus';
 import '../styles/performance.css';
-
-const STRIPE_TEAM_LINK = 'https://buy.stripe.com/test_7sY5kw3JBaoR93UaRE3ks00';
 
 export default function Performance() {
   const { currentTeam } = useTeam();
@@ -13,8 +10,6 @@ export default function Performance() {
   const [playerStats, setPlayerStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const currentUser = auth.currentUser;
-  const subscriptionStatus = useSubscriptionStatus();
-
 
   // Load team performance data
   useEffect(() => {
@@ -45,8 +40,8 @@ export default function Performance() {
       const stats = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(s => s.playerName); // Only player stats, not team stats
-      
-      setPlayerStats(stats.sort((a, b) => 
+
+      setPlayerStats(stats.sort((a, b) =>
         (b.stats?.goals || 0) - (a.stats?.goals || 0)
       ));
       setLoading(false);
@@ -61,32 +56,6 @@ export default function Performance() {
 
   if (!currentTeam) {
     return <div className="performance-page"><p>Select a team to view performance</p></div>;
-  }
-
-  if (subscriptionStatus !== 'active') {
-    return (
-      <div className="performance-page">
-        <div className="perf-header">
-          <h1>Performance</h1>
-          <p>{currentTeam.name}</p>
-        </div>
-
-        <div className="paywall">
-          <h2 className="paywall-title">Premium feature</h2>
-          <p className="paywall-sub">
-            To unlock Performance stats, please upgrade your Team plan.
-          </p>
-          <a
-            className="btn btn-primary"
-            href={STRIPE_TEAM_LINK}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Upgrade with Stripe
-          </a>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -123,31 +92,10 @@ export default function Performance() {
         </div>
       )}
 
-      {/* TEAM RESULTS CHART */}
-      {teamStats && teamStats.stats && (
-        <div className="chart-section">
-          <h2>Match Results</h2>
-          <div className="results-chart">
-            <div className="bar wins">
-              <span className="bar-label">Wins</span>
-              <span className="bar-value">{teamStats.stats.wins || 0}</span>
-            </div>
-            <div className="bar draws">
-              <span className="bar-label">Draws</span>
-              <span className="bar-value">{teamStats.stats.draws || 0}</span>
-            </div>
-            <div className="bar losses">
-              <span className="bar-label">Losses</span>
-              <span className="bar-value">{teamStats.stats.losses || 0}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* PLAYER STATS TABLE */}
       <div className="players-section">
         <h2>Player Statistics</h2>
-        
+
         {playerStats.length === 0 ? (
           <p className="empty-state">No player stats recorded yet</p>
         ) : (
