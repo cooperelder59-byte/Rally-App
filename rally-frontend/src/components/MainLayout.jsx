@@ -183,7 +183,6 @@ export default function MainLayout() {
     navigate('/team-setup');
   }, [navigate]);
 
-  // ✅ FIX: navigate is now in scope (MainLayout), passed down as a prop
   const handleLogoClick = useCallback(() => {
     navigate('/');
     setSidebarOpen(false); // collapse on mobile after navigating
@@ -211,7 +210,7 @@ export default function MainLayout() {
         onCreateTeam={handleCreateTeam}
         activeNavPath={location.pathname}
         onLogout={handleLogout}
-        onLogoClick={handleLogoClick}  // ✅ passed in instead of inline navigate()
+        onLogoClick={handleLogoClick}
       />
 
       <div style={{ ...styles.mainContent, marginLeft: sidebarOpen ? 240 : 0 }}>
@@ -349,12 +348,16 @@ const styles = {
   },
   navLink: {
     display: 'flex', alignItems: 'center', gap: 10,
+    width: '100%',              // ← FIX: makes the link fill the row so the
+                                 //   pip's `right: 10` anchors to the sidebar
+                                 //   edge instead of hugging the label text
     padding: '9px 12px',
     borderRadius: 8,
     textDecoration: 'none',
     fontSize: 14,
     color: MUTED,
     position: 'relative',
+    boxSizing: 'border-box',
     transition: 'background .12s, color .12s',
   },
   navLinkActive: {
@@ -364,7 +367,8 @@ const styles = {
   navIcon: { fontSize: 13, color: MUTED, width: 16, textAlign: 'center' },
   navIconActive: { color: PRIMARY },
   navActivePip: {
-    position: 'absolute', right: 10,
+    position: 'absolute', right: 10, top: '50%',
+    transform: 'translateY(-50%)',
     width: 5, height: 5,
     borderRadius: '50%',
     background: PRIMARY,
