@@ -313,23 +313,20 @@ function AboutSection() {
   );
 }
 
-// Contact Section Component (replaces Pricing)
+// Contact Section Component — simple info, no CTA button
 function ContactSection() {
   return (
     <section className="section section-dark" id="contact">
       <div className="container container-narrow" style={{ textAlign: 'center' }}>
         <div className="eyebrow">Contact</div>
         <h2>Get in touch.</h2>
-        <p className="waitlist-sub">
-          Questions about Rally, or want to bring it to your school or club? We'd love to hear from you.
+        <p className="waitlist-sub" style={{ marginBottom: 0 }}>
+          Questions about Rally, or want to bring it to your school or club?
+          Reach out at{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="accent" style={{ textDecoration: 'underline' }}>
+            {CONTACT_EMAIL}
+          </a>.
         </p>
-        <button
-          onClick={() => { window.location.href = `mailto:${CONTACT_EMAIL}`; }}
-          className="btn btn-primary btn-full"
-          style={{ maxWidth: '320px', margin: '0 auto', display: 'block' }}
-        >
-          Contact us
-        </button>
       </div>
     </section>
   );
