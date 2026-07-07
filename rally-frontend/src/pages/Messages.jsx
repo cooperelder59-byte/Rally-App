@@ -20,6 +20,13 @@ export default function Messages() {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [convoName, setConvoName] = useState('');
   const [loadingMembers, setLoadingMembers] = useState(false);
+
+  // uid -> { name, email } cache for every member of the current team.
+  // This is the single source of truth for "who is this person" across
+  // the convo list, chat bubbles, and the new-conversation picker —
+  // instead of relying on Firebase Auth's displayName (often never set).
+  const [memberProfiles, setMemberProfiles] = useState({});
+
   const messagesEndRef = useRef(null);
 
   // Wait for Firebase auth to resolve before doing anything
@@ -27,6 +34,57 @@ export default function Messages() {
     const unsub = onAuthStateChanged(auth, (u) => setCurrentUser(u));
     return () => unsub();
   }, []);
+
+  // Load + cache profile info (name/email) for every member of the team,
+  // as soon as we know the team — not just when opening the "new convo" modal.
+  useEffect(() => {
+    if (!currentTeam?.id) {
+      setMemberProfiles({});
+      return;
+    }
+
+    const memberIds = currentTeam.memberIds || [];
+    if (memberIds.length === 0) {
+      setMemberProfiles({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const snaps = await Promise.all(
+          memberIds.map(uid => getDoc(doc(db, 'users', uid)))
+        );
+        if (cancelled) return;
+
+        const profiles = {};
+        snaps.forEach((snap, i) => {
+          const uid = memberIds[i];
+          if (snap.exists()) {
+            const data = snap.data();
+            profiles[uid] = {
+              name: data.name || data.displayName || null,
+              email: data.email || null,
+            };
+          } else {
+            profiles[uid] = { name: null, email: null };
+          }
+        });
+        setMemberProfiles(profiles);
+      } catch (err) {
+        console.error('Failed to load member profiles:', err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [currentTeam?.id, currentTeam?.memberIds]);
+
+  // Helper: best display name we have for a given uid
+  const displayNameFor = (uid, fallback) => {
+    const profile = memberProfiles[uid];
+    return profile?.name || profile?.email || fallback || 'Unknown';
+  };
 
   // Load conversations once we have both user and team
   useEffect(() => {
@@ -78,10 +136,18 @@ export default function Messages() {
     if (!newMessage.trim() || !activeConvo || !currentUser) return;
     const text = newMessage.trim();
     setNewMessage('');
+
+    // Resolve the sender's display name from the Firestore profile cache
+    // first, falling back to Auth displayName, then email. This is what
+    // actually fixes messages/convo entries showing blank or email-only.
+    const senderName =
+      displayNameFor(currentUser.uid, currentUser.displayName) ||
+      currentUser.email;
+
     await addDoc(collection(db, 'conversations', activeConvo.id, 'messages'), {
       text,
       senderId: currentUser.uid,
-      senderName: currentUser.displayName || currentUser.email,
+      senderName,
       createdAt: serverTimestamp()
     });
     await updateDoc(doc(db, 'conversations', activeConvo.id), {
@@ -96,7 +162,8 @@ export default function Messages() {
     await deleteDoc(doc(db, 'conversations', convoId));
   };
 
-  // Load team members directly from Firestore — currentTeam.memberIds is available
+  // Load team members for the "new conversation" picker.
+  // Reuses the memberProfiles cache instead of re-fetching from scratch.
   const openNewConvo = async () => {
     if (!currentTeam?.id || !currentUser) return;
     setShowNewConvo(true);
@@ -111,21 +178,34 @@ export default function Messages() {
 
       if (otherIds.length === 0) { setLoadingMembers(false); return; }
 
-      const userDocs = await Promise.all(
-        otherIds.map(uid => getDoc(doc(db, 'users', uid)))
-      );
+      // If we already have profiles cached (the common case), use them
+      // directly instead of hitting Firestore again.
+      const haveAllCached = otherIds.every(uid => memberProfiles[uid]);
 
-      const members = userDocs
-        .map((snap, i) => {
-          if (!snap.exists()) return null;
-          const data = snap.data();
-          return {
-            uid: otherIds[i],
-            name: data.name || data.displayName || null,
-            email: data.email || null,
-          };
-        })
-        .filter(Boolean);
+      let members;
+      if (haveAllCached) {
+        members = otherIds.map(uid => ({
+          uid,
+          name: memberProfiles[uid]?.name || null,
+          email: memberProfiles[uid]?.email || null,
+        }));
+      } else {
+        const userDocs = await Promise.all(
+          otherIds.map(uid => getDoc(doc(db, 'users', uid)))
+        );
+
+        members = userDocs
+          .map((snap, i) => {
+            if (!snap.exists()) return null;
+            const data = snap.data();
+            return {
+              uid: otherIds[i],
+              name: data.name || data.displayName || null,
+              email: data.email || null,
+            };
+          })
+          .filter(Boolean);
+      }
 
       setTeamMembers(members);
     } catch (err) {
@@ -227,17 +307,24 @@ export default function Messages() {
           <>
             <div className="chat-header">{activeConvo.name}</div>
             <div className="chat-messages">
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`chat-bubble ${m.senderId === currentUser?.uid ? 'own' : ''}`}
-                >
-                  <div className="chat-sender">
-                    {m.senderId === currentUser?.uid ? 'You' : m.senderName}
+              {messages.map((m) => {
+                const isOwn = m.senderId === currentUser?.uid;
+                // Fall back to the live profile cache if the message was
+                // stored without a senderName (e.g. older messages, or
+                // messages sent before displayName was ever set).
+                const label = isOwn
+                  ? 'You'
+                  : (m.senderName || displayNameFor(m.senderId));
+                return (
+                  <div
+                    key={m.id}
+                    className={`chat-bubble ${isOwn ? 'own' : ''}`}
+                  >
+                    <div className="chat-sender">{label}</div>
+                    <div className="chat-text">{m.text}</div>
                   </div>
-                  <div className="chat-text">{m.text}</div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
             <form className="chat-input-row" onSubmit={handleSend}>
@@ -298,9 +385,9 @@ export default function Messages() {
                       }}
                     >
                       <span style={{ fontWeight: 600, fontSize: 14 }}>
-                        {m.name || m.email}
+                        {m.name || m.email || 'Unknown'}
                       </span>
-                      {m.name && (
+                      {m.name && m.email && (
                         <span style={{ fontSize: 12, color: '#6B6B6B' }}>{m.email}</span>
                       )}
                     </div>
