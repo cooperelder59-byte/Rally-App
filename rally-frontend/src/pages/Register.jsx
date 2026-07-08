@@ -1,7 +1,12 @@
 import { useState, useId } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -37,6 +42,17 @@ function EyeIcon({ open }) {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M2 12s3.5-7 10-7c1.6 0 3 .3 4.2.8M22 12s-1.2 2.4-3.4 4.3M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z" />
+      <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z" />
     </svg>
   );
 }
@@ -91,6 +107,8 @@ function friendlyAuthError(error) {
       return 'Network error. Check your connection and try again.';
     case 'auth/too-many-requests':
       return 'Too many attempts. Please wait a moment and try again.';
+    case 'auth/popup-closed-by-user':
+      return null; // user cancelled — no need to show an error
     default:
       return 'Something went wrong. Please try again.';
   }
@@ -109,6 +127,7 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [errorMsg, setErrorMsg]   = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const nameErrId = useId();
@@ -118,10 +137,11 @@ export default function Register() {
   const termsErrId = useId();
 
   const strength = getStrength(password);
+  const busy = isLoading || isGoogleLoading;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (busy) return;
 
     const errors = validate({ name, email, password, confirmPassword, agreedToTerms });
     setFieldErrors(errors);
@@ -144,6 +164,39 @@ export default function Register() {
       setErrorMsg(friendlyAuthError(error));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (busy) return;
+    setIsGoogleLoading(true);
+    setErrorMsg('');
+    try {
+      const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+      const userRef = doc(db, 'users', user.uid);
+      const existing = await getDoc(userRef);
+
+      if (!existing.exists()) {
+        // First time we've seen this account — create their Firestore profile,
+        // same shape as the email/password signup path above.
+        await setDoc(userRef, {
+          name: user.displayName || '',
+          email: user.email || '',
+          teamIds: [],
+          createdAt: serverTimestamp(),
+        });
+        navigate('/team-setup');
+      } else {
+        // Someone who already has an account used "sign up" to log in instead —
+        // send them straight to their dashboard rather than re-onboarding them.
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Google sign-up error:', error);
+      const msg = friendlyAuthError(error);
+      if (msg) setErrorMsg(msg);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -176,7 +229,7 @@ export default function Register() {
               onChange={(e) => setName(e.target.value)}
               style={{ ...s.input, ...(fieldErrors.name ? s.inputInvalid : {}) }}
               autoComplete="name"
-              disabled={isLoading}
+              disabled={busy}
               aria-invalid={Boolean(fieldErrors.name)}
               aria-describedby={fieldErrors.name ? nameErrId : undefined}
             />
@@ -196,7 +249,7 @@ export default function Register() {
               onChange={(e) => setEmail(e.target.value)}
               style={{ ...s.input, ...(fieldErrors.email ? s.inputInvalid : {}) }}
               autoComplete="email"
-              disabled={isLoading}
+              disabled={busy}
               aria-invalid={Boolean(fieldErrors.email)}
               aria-describedby={fieldErrors.email ? emailErrId : undefined}
             />
@@ -217,7 +270,7 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ ...s.input, ...(fieldErrors.password ? s.inputInvalid : {}), paddingRight: 44 }}
                 autoComplete="new-password"
-                disabled={isLoading}
+                disabled={busy}
                 aria-invalid={Boolean(fieldErrors.password)}
                 aria-describedby={fieldErrors.password ? passwordErrId : undefined}
               />
@@ -227,7 +280,7 @@ export default function Register() {
                 onClick={() => setShowPassword(p => !p)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
-                disabled={isLoading}
+                disabled={busy}
               >
                 <EyeIcon open={showPassword} />
               </button>
@@ -268,7 +321,7 @@ export default function Register() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               style={{ ...s.input, ...(fieldErrors.confirmPassword ? s.inputInvalid : {}) }}
               autoComplete="new-password"
-              disabled={isLoading}
+              disabled={busy}
               aria-invalid={Boolean(fieldErrors.confirmPassword)}
               aria-describedby={fieldErrors.confirmPassword ? confirmErrId : undefined}
             />
@@ -284,7 +337,7 @@ export default function Register() {
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                disabled={isLoading}
+                disabled={busy}
                 style={s.checkbox}
                 aria-invalid={Boolean(fieldErrors.agreedToTerms)}
                 aria-describedby={fieldErrors.agreedToTerms ? termsErrId : undefined}
@@ -310,12 +363,32 @@ export default function Register() {
           {/* Submit */}
           <button
             type="submit"
-            style={{ ...s.submitBtn, ...(isLoading ? s.submitBtnLoading : {}) }}
-            disabled={isLoading}
+            style={{ ...s.submitBtn, ...(busy ? s.submitBtnLoading : {}) }}
+            disabled={busy}
           >
             {isLoading
               ? <><span style={s.spinner} /> Creating account…</>
               : 'Sign up'
+            }
+          </button>
+
+          {/* Divider */}
+          <div style={s.dividerRow}>
+            <span style={s.dividerLine} />
+            <span style={s.dividerText}>or</span>
+            <span style={s.dividerLine} />
+          </div>
+
+          {/* Google sign-up */}
+          <button
+            type="button"
+            style={{ ...s.googleBtn, ...(busy ? s.submitBtnLoading : {}) }}
+            onClick={handleGoogleSignIn}
+            disabled={busy}
+          >
+            {isGoogleLoading
+              ? <><span style={s.spinnerDark} /> Connecting…</>
+              : <><GoogleIcon /> Continue with Google</>
             }
           </button>
         </form>
@@ -506,11 +579,46 @@ const s = {
     opacity: 0.7,
     cursor: 'not-allowed',
   },
+  dividerRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    margin: '2px 0',
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    background: BORDER,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: MUTED,
+  },
+  googleBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    padding: '11px',
+    background: '#111',
+    border: `1px solid ${BORDER}`,
+    borderRadius: 8,
+    color: TEXT,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'background .15s',
+  },
   spinner: {
     display: 'inline-block',
     width: 14, height: 14,
     border: '2px solid rgba(0,0,0,.2)',
     borderTopColor: '#0f0f0f',
+    borderRadius: '50%',
+    animation: 'spin 0.7s linear infinite',
+  },
+  spinnerDark: {
+    display: 'inline-block',
+    width: 14, height: 14,
+    border: '2px solid rgba(255,255,255,.15)',
+    borderTopColor: TEXT,
     borderRadius: '50%',
     animation: 'spin 0.7s linear infinite',
   },
