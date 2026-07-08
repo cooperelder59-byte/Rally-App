@@ -26,7 +26,15 @@ function RosterStyles() {
       @keyframes cvr-shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
 
       .cvr-backdrop { animation: cvr-fadeIn .15s ease-out; }
-      .cvr-modal { animation: cvr-popIn .18s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+      /* FIX: without "forwards", the animation's final transform
+         (translate(-50%,-50%) scale(1)) is discarded the instant the
+         .18s animation ends, and the modal falls back to having NO
+         transform at all — leaving its top-left corner (not its
+         center) pinned at top:50%/left:50%, which shoves it down and
+         off the bottom of the screen. "forwards" keeps that last
+         keyframe state applied permanently. */
+      .cvr-modal { animation: cvr-popIn .18s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
       .cvr-input { transition: border-color .15s, background .15s; }
       .cvr-input:focus { border-color: ${PRIMARY} !important; background: ${SURFACE} !important; }
