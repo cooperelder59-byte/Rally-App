@@ -27,7 +27,7 @@ function RosterStyles() {
 
       .cvr-backdrop { animation: cvr-fadeIn .15s ease-out; }
 
-      /* Centering now lives in the element's own inline `transform`
+      /* Centering now lives in the element's own inline transform
          (see EditProfileModal below), not in the animation. That way
          it can never be lost — whatever the animation engine hands
          the transform back to when it finishes is the inline value,
