@@ -27,13 +27,12 @@ function RosterStyles() {
 
       .cvr-backdrop { animation: cvr-fadeIn .15s ease-out; }
 
-      /* FIX: without "forwards", the animation's final transform
-         (translate(-50%,-50%) scale(1)) is discarded the instant the
-         .18s animation ends, and the modal falls back to having NO
-         transform at all — leaving its top-left corner (not its
-         center) pinned at top:50%/left:50%, which shoves it down and
-         off the bottom of the screen. "forwards" keeps that last
-         keyframe state applied permanently. */
+      /* Centering now lives in the element's own inline `transform`
+         (see EditProfileModal below), not in the animation. That way
+         it can never be lost — whatever the animation engine hands
+         the transform back to when it finishes is the inline value,
+         which is already centered. The animation here only adds the
+         scale pop-in on top of that base transform. */
       .cvr-modal { animation: cvr-popIn .18s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
       .cvr-input { transition: border-color .15s, background .15s; }
@@ -157,6 +156,10 @@ function EditProfileModal({ member, isCoach, onClose, onSave }) {
         aria-label="Edit profile"
         style={{
           position: 'fixed', top: '50%', left: '50%',
+          // Base centering lives here, not just in the animation keyframes.
+          // Even if the animation's end state doesn't stick for any reason,
+          // this inline transform still keeps the modal centered.
+          transform: 'translate(-50%, -50%)',
           width: 'min(440px, calc(100vw - 32px))',
           background: SURFACE, borderRadius: 14, zIndex: 101,
           border: `1px solid ${BORDER}`,
