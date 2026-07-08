@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -12,6 +12,7 @@ const SURFACE = '#161616';
 const BORDER  = '#222';
 const TEXT    = '#e8e8e8';
 const MUTED   = '#666';
+const DANGER  = '#ff6b6b';
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 
@@ -25,11 +26,26 @@ function RallyLogo() {
   );
 }
 
+function EyeIcon({ open }) {
+  // Two distinct icons — the emoji version looked the same in both states.
+  return open ? (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  ) : (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M2 12s3.5-7 10-7c1.6 0 3 .3 4.2.8M22 12s-1.2 2.4-3.4 4.3M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ─── Password strength ────────────────────────────────────────────────────────
 
 function getStrength(pw) {
   if (!pw) return null;
-  if (pw.length < 6) return { level: 0, label: 'Too short', color: '#ff6b6b' };
+  if (pw.length < 6) return { level: 0, label: 'Too short', color: DANGER };
   let score = 0;
   if (pw.length >= 8)          score++;
   if (/[A-Z]/.test(pw))        score++;
@@ -41,41 +57,91 @@ function getStrength(pw) {
   return             { level: 4, label: 'Strong', color: PRIMARY };
 }
 
+// ─── Validation helpers ────────────────────────────────────────────────────────
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate({ name, email, password, confirmPassword, agreedToTerms }) {
+  const errors = {};
+  if (!name.trim()) errors.name = 'Full name is required.';
+
+  if (!email.trim()) errors.email = 'Email is required.';
+  else if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address.';
+
+  if (!password) errors.password = 'Password is required.';
+  else if (password.length < 6) errors.password = 'Password must be at least 6 characters.';
+
+  if (!confirmPassword) errors.confirmPassword = 'Please confirm your password.';
+  else if (confirmPassword !== password) errors.confirmPassword = 'Passwords do not match.';
+
+  if (!agreedToTerms) errors.agreedToTerms = 'You must agree to the terms to continue.';
+
+  return errors;
+}
+
+function friendlyAuthError(error) {
+  switch (error?.code) {
+    case 'auth/email-already-in-use':
+      return 'That email is already registered.';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters.';
+    case 'auth/invalid-email':
+      return 'That email address looks invalid.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+}
+
 // ─── Register ─────────────────────────────────────────────────────────────────
 
 export default function Register() {
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [fieldErrors, setFieldErrors] = useState({});
   const [errorMsg, setErrorMsg]   = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const nameErrId = useId();
+  const emailErrId = useId();
+  const passwordErrId = useId();
+  const confirmErrId = useId();
+  const termsErrId = useId();
 
   const strength = getStrength(password);
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    const errors = validate({ name, email, password, confirmPassword, agreedToTerms });
+    setFieldErrors(errors);
     setErrorMsg('');
+    if (Object.keys(errors).length > 0) return;
+
+    setIsLoading(true);
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(user, { displayName: name });
+      const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await updateProfile(user, { displayName: name.trim() });
       await setDoc(doc(db, 'users', user.uid), {
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         teamIds: [],
         createdAt: serverTimestamp(),
       });
       navigate('/team-setup');
     } catch (error) {
       console.error('Register error:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMsg('That email is already registered.');
-      } else if (error.code === 'auth/weak-password') {
-        setErrorMsg('Password must be at least 6 characters.');
-      } else {
-        setErrorMsg('Something went wrong. Please try again.');
-      }
+      setErrorMsg(friendlyAuthError(error));
     } finally {
       setIsLoading(false);
     }
@@ -95,20 +161,26 @@ export default function Register() {
         <h1 style={s.heading}>Create your account</h1>
         <p style={s.sub}>Bring your team together.</p>
 
-        <div style={s.form}>
+        <form style={s.form} onSubmit={handleSubmit} noValidate>
           {/* Name */}
           <div style={s.field}>
             <label style={s.label} htmlFor="name">Full name</label>
             <input
               id="name"
+              name="name"
               type="text"
               placeholder="Jordan Smith"
               required
+              autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={s.input}
+              style={{ ...s.input, ...(fieldErrors.name ? s.inputInvalid : {}) }}
               autoComplete="name"
+              disabled={isLoading}
+              aria-invalid={Boolean(fieldErrors.name)}
+              aria-describedby={fieldErrors.name ? nameErrId : undefined}
             />
+            {fieldErrors.name && <span id={nameErrId} style={s.fieldError}>{fieldErrors.name}</span>}
           </div>
 
           {/* Email */}
@@ -116,14 +188,19 @@ export default function Register() {
             <label style={s.label} htmlFor="email">Email</label>
             <input
               id="email"
+              name="email"
               type="email"
               placeholder="you@team.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={s.input}
+              style={{ ...s.input, ...(fieldErrors.email ? s.inputInvalid : {}) }}
               autoComplete="email"
+              disabled={isLoading}
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby={fieldErrors.email ? emailErrId : undefined}
             />
+            {fieldErrors.email && <span id={emailErrId} style={s.fieldError}>{fieldErrors.email}</span>}
           </div>
 
           {/* Password */}
@@ -132,23 +209,30 @@ export default function Register() {
             <div style={s.passwordWrap}>
               <input
                 id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ ...s.input, paddingRight: 44 }}
+                style={{ ...s.input, ...(fieldErrors.password ? s.inputInvalid : {}), paddingRight: 44 }}
                 autoComplete="new-password"
+                disabled={isLoading}
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? passwordErrId : undefined}
               />
               <button
                 type="button"
                 style={s.eyeBtn}
                 onClick={() => setShowPassword(p => !p)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                disabled={isLoading}
               >
-                {showPassword ? '👁' : '👁'}
+                <EyeIcon open={showPassword} />
               </button>
             </div>
+            {fieldErrors.password && <span id={passwordErrId} style={s.fieldError}>{fieldErrors.password}</span>}
 
             {/* Strength bar */}
             {password && strength && (
@@ -171,6 +255,50 @@ export default function Register() {
             )}
           </div>
 
+          {/* Confirm password */}
+          <div style={s.field}>
+            <label style={s.label} htmlFor="confirmPassword">Confirm password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={{ ...s.input, ...(fieldErrors.confirmPassword ? s.inputInvalid : {}) }}
+              autoComplete="new-password"
+              disabled={isLoading}
+              aria-invalid={Boolean(fieldErrors.confirmPassword)}
+              aria-describedby={fieldErrors.confirmPassword ? confirmErrId : undefined}
+            />
+            {fieldErrors.confirmPassword && (
+              <span id={confirmErrId} style={s.fieldError}>{fieldErrors.confirmPassword}</span>
+            )}
+          </div>
+
+          {/* Terms */}
+          <div style={s.field}>
+            <label style={s.termsRow}>
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                disabled={isLoading}
+                style={s.checkbox}
+                aria-invalid={Boolean(fieldErrors.agreedToTerms)}
+                aria-describedby={fieldErrors.agreedToTerms ? termsErrId : undefined}
+              />
+              <span>
+                I agree to the <Link to="/terms" style={s.inlineLink}>Terms of Service</Link> and{' '}
+                <Link to="/privacy" style={s.inlineLink}>Privacy Policy</Link>
+              </span>
+            </label>
+            {fieldErrors.agreedToTerms && (
+              <span id={termsErrId} style={s.fieldError}>{fieldErrors.agreedToTerms}</span>
+            )}
+          </div>
+
           {/* Error */}
           {errorMsg && (
             <div style={s.error} role="alert">
@@ -181,9 +309,8 @@ export default function Register() {
 
           {/* Submit */}
           <button
-            type="button"
+            type="submit"
             style={{ ...s.submitBtn, ...(isLoading ? s.submitBtnLoading : {}) }}
-            onClick={handleSubmit}
             disabled={isLoading}
           >
             {isLoading
@@ -191,7 +318,7 @@ export default function Register() {
               : 'Sign up'
             }
           </button>
-        </div>
+        </form>
 
         <p style={s.switchText}>
           Already have an account?{' '}
@@ -284,6 +411,13 @@ const s = {
     boxSizing: 'border-box',
     transition: 'border-color .15s',
   },
+  inputInvalid: {
+    borderColor: DANGER,
+  },
+  fieldError: {
+    fontSize: 12,
+    color: DANGER,
+  },
   passwordWrap: {
     position: 'relative',
   },
@@ -292,10 +426,10 @@ const s = {
     transform: 'translateY(-50%)',
     background: 'none', border: 'none',
     cursor: 'pointer',
-    fontSize: 14,
     lineHeight: 1,
     padding: 4,
     color: MUTED,
+    display: 'flex',
   },
   strengthRow: {
     display: 'flex', alignItems: 'center', gap: 8,
@@ -317,19 +451,41 @@ const s = {
     minWidth: 44,
     textAlign: 'right',
   },
+  termsRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+    fontSize: 13,
+    color: MUTED,
+    cursor: 'pointer',
+    lineHeight: 1.4,
+  },
+  checkbox: {
+    width: 14,
+    height: 14,
+    marginTop: 2,
+    accentColor: PRIMARY,
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  inlineLink: {
+    color: PRIMARY,
+    textDecoration: 'none',
+    fontWeight: 600,
+  },
   error: {
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '10px 14px',
     background: 'rgba(255,80,80,.08)',
     border: '1px solid rgba(255,80,80,.2)',
     borderRadius: 8,
-    color: '#ff6b6b',
+    color: DANGER,
     fontSize: 13,
   },
   errorDot: {
     width: 6, height: 6,
     borderRadius: '50%',
-    background: '#ff6b6b',
+    background: DANGER,
     flexShrink: 0,
   },
   submitBtn: {

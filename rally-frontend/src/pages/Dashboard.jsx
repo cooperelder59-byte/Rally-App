@@ -8,9 +8,9 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  getDocs,
   updateDoc,
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import { useTeam } from "../context/TeamContext";
 
@@ -48,10 +48,11 @@ function timeAgo(date) {
 function getInitials(name) {
   return (name || "?")
     .split(" ")
+    .filter(Boolean)
     .map(w => w[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase();
+    .toUpperCase() || "?";
 }
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
@@ -83,14 +84,26 @@ function Avatar({ name, src, size = 38 }) {
 // ─── Invite Code Banner ───────────────────────────────────────────────────────
 function InviteCodeBanner({ inviteCode }) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
   if (!inviteCode) return null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(inviteCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (!navigator.clipboard) {
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 2000);
+      return;
+    }
+    navigator.clipboard.writeText(inviteCode)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error("Clipboard write failed:", err);
+        setCopyError(true);
+        setTimeout(() => setCopyError(false), 2000);
+      });
   };
 
   return (
@@ -120,9 +133,9 @@ function InviteCodeBanner({ inviteCode }) {
       <button
         onClick={handleCopy}
         style={{
-          background: copied ? THEME.lime : THEME.surface2,
-          color: copied ? "#000" : THEME.text,
-          border: `1px solid ${copied ? THEME.lime : THEME.border}`,
+          background: copied ? THEME.lime : copyError ? THEME.red : THEME.surface2,
+          color: copied ? "#000" : "#fff",
+          border: `1px solid ${copied ? THEME.lime : copyError ? THEME.red : THEME.border}`,
           borderRadius: 7,
           padding: "5px 12px",
           fontSize: 11,
@@ -133,7 +146,7 @@ function InviteCodeBanner({ inviteCode }) {
           whiteSpace: "nowrap",
         }}
       >
-        {copied ? "COPIED!" : "COPY"}
+        {copied ? "COPIED!" : copyError ? "COPY FAILED" : "COPY"}
       </button>
     </div>
   );
@@ -161,6 +174,8 @@ function PostItem({ post }) {
           fontSize: 14,
           color: "#CCC",
           lineHeight: 1.5,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}>
           {post.text}
         </div>
@@ -174,7 +189,7 @@ function ComposeForm({ currentUser, text, onTextChange, onSubmit, sending }) {
   const isValid = text.trim().length > 0 && !sending;
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && isValid) {
       onSubmit(e);
     }
   };
@@ -198,6 +213,7 @@ function ComposeForm({ currentUser, text, onTextChange, onSubmit, sending }) {
         onChange={e => onTextChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Post an announcement… (⌘↵ to send)"
+        disabled={sending}
         style={{
           flex: 1,
           background: THEME.surface,
@@ -261,35 +277,59 @@ function LoadingState({ label = "Loading…" }) {
   );
 }
 
+function ErrorState({ message }) {
+  return (
+    <div style={{
+      margin: "16px 20px", padding: "10px 14px",
+      background: `${THEME.red}18`, border: `1px solid ${THEME.red}44`,
+      borderRadius: 8, color: THEME.red, fontSize: 13,
+    }}>
+      {message}
+    </div>
+  );
+}
+
 // ─── Announcement Feed ────────────────────────────────────────────────────────
 function AnnouncementFeed({ teamId, currentUser }) {
   const [posts, setPosts]     = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [text, setText]       = useState("");
   const [sending, setSending] = useState(false);
+  const [postError, setPostError] = useState(null);
 
   useEffect(() => {
-    if (!teamId) { setPosts([]); setLoading(false); return; }
+    if (!teamId) { setPosts([]); setLoading(false); setLoadError(null); return; }
     setLoading(true);
+    setLoadError(null);
     const q = query(
       collection(db, "teams", teamId, "announcements"),
       orderBy("createdAt", "desc")
     );
-    const unsub = onSnapshot(q, snap => {
-      setPosts(snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: d.data().createdAt?.toDate?.() || null,
-      })));
-      setLoading(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      snap => {
+        setPosts(snap.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })));
+        setLoading(false);
+      },
+      err => {
+        console.error("Failed to load announcements:", err);
+        setLoadError("Couldn't load announcements — try refreshing.");
+        setLoading(false);
+      }
+    );
     return () => unsub();
   }, [teamId]);
 
   const handlePost = useCallback(async e => {
     e.preventDefault();
-    if (!text.trim() || !currentUser || !teamId) return;
+    if (sending || !text.trim() || !currentUser || !teamId) return;
     setSending(true);
+    setPostError(null);
     try {
       await addDoc(collection(db, "teams", teamId, "announcements"), {
         text: text.trim(),
@@ -300,10 +340,11 @@ function AnnouncementFeed({ teamId, currentUser }) {
       setText("");
     } catch (err) {
       console.error("Error posting:", err);
+      setPostError("Couldn't post that — please try again.");
     } finally {
       setSending(false);
     }
-  }, [text, currentUser, teamId]);
+  }, [text, currentUser, teamId, sending]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -312,11 +353,13 @@ function AnnouncementFeed({ teamId, currentUser }) {
         display: "flex", flexDirection: "column", gap: 16,
       }}>
         {loading && <LoadingState />}
-        {!loading && posts.length === 0 && (
+        {!loading && loadError && <ErrorState message={loadError} />}
+        {!loading && !loadError && posts.length === 0 && (
           <EmptyState message="No announcements yet" description="Post something below to get started" />
         )}
         {posts.map(post => <PostItem key={post.id} post={post} />)}
       </div>
+      {postError && <ErrorState message={postError} />}
       <ComposeForm
         currentUser={currentUser}
         text={text}
@@ -342,7 +385,7 @@ function MemberCard({ member }) {
       gap: 12,
       justifyContent: "space-between",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <Avatar name={member.name || member.email} src={member.photoURL} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14, color: THEME.text, marginBottom: 2 }}>
@@ -362,6 +405,7 @@ function MemberCard({ member }) {
         border: role === "admin" ? `1px solid rgba(179,245,0,0.3)` : "1px solid transparent",
         borderRadius: 5,
         padding: "3px 8px",
+        flexShrink: 0,
       }}>
         {role}
       </div>
@@ -372,64 +416,105 @@ function MemberCard({ member }) {
 function MembersTab({ teamId, currentUser }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    if (!teamId) { setMembers([]); setLoading(false); return; }
+    if (!teamId) { setMembers([]); setLoading(false); setLoadError(null); return; }
     setLoading(true);
+    setLoadError(null);
 
-    // Watch the team doc — members are stored as a memberIds array, not a subcollection
-    const unsub = onSnapshot(doc(db, "teams", teamId), async (teamSnap) => {
-      if (!teamSnap.exists()) { setMembers([]); setLoading(false); return; }
+    let cancelled = false;
 
-      const data = teamSnap.data();
-      const memberIds = data.memberIds || [];
-      const ownerId = data.ownerId;
+    // Watch the team doc — members are stored as a memberIds array, not a subcollection.
+    const unsub = onSnapshot(
+      doc(db, "teams", teamId),
+      (teamSnap) => {
+        if (cancelled) return;
 
-      if (memberIds.length === 0) { setMembers([]); setLoading(false); return; }
+        if (!teamSnap.exists()) { setMembers([]); setLoading(false); return; }
 
-      // Fetch each user profile from the users collection
-      const userDocs = await Promise.all(
-        memberIds.map(uid => getDoc(doc(db, "users", uid)))
-      );
+        const data = teamSnap.data();
+        const memberIds = Array.from(new Set(data.memberIds || []));
+        const ownerId = data.ownerId;
 
-      const resolved = userDocs.map((userSnap, i) => {
-        const uid = memberIds[i];
-        const profile = userSnap.exists() ? userSnap.data() : {};
-        return {
-          id: uid,
-          name: profile.displayName || profile.name || null,
-          email: profile.email || null,
-          photoURL: profile.photoURL || null,
-          role: uid === ownerId ? "admin" : "member",
-        };
-      });
+        if (memberIds.length === 0) { setMembers([]); setLoading(false); return; }
 
-      // Fill in current user's info from auth if their Firestore profile is sparse
-      const filled = resolved.map(m => {
-        if (currentUser && m.id === currentUser.uid && !m.name && !m.email) {
-          return {
-            ...m,
-            name: currentUser.displayName || null,
-            email: currentUser.email || null,
-            photoURL: currentUser.photoURL || null,
-          };
-        }
-        return m;
-      });
+        // Fetch each user profile from the users collection. Wrapped in a
+        // try/catch — previously an unhandled rejection here (e.g. one
+        // permission-denied doc) would leave the tab stuck on "Loading…"
+        // forever with no feedback.
+        (async () => {
+          try {
+            const userDocs = await Promise.all(
+              memberIds.map(uid =>
+                getDoc(doc(db, "users", uid)).catch(err => {
+                  console.error(`Failed to load user ${uid}:`, err);
+                  return null;
+                })
+              )
+            );
+            if (cancelled) return;
 
-      // Owner first, then alphabetical
-      filled.sort((a, b) => {
-        if (a.role === "admin") return -1;
-        if (b.role === "admin") return 1;
-        return (a.name || a.email || "").localeCompare(b.name || b.email || "");
-      });
+            const resolved = userDocs.map((userSnap, i) => {
+              const uid = memberIds[i];
+              const profile = userSnap?.exists() ? userSnap.data() : {};
+              return {
+                id: uid,
+                name: profile.displayName || profile.name || null,
+                email: profile.email || null,
+                photoURL: profile.photoURL || null,
+                role: uid === ownerId ? "admin" : "member",
+              };
+            });
 
-      setMembers(filled);
-      setLoading(false);
-    });
+            // Fill in current user's info from auth if their Firestore profile is sparse.
+            const filled = resolved.map(m => {
+              if (currentUser && m.id === currentUser.uid && !m.name && !m.email) {
+                return {
+                  ...m,
+                  name: currentUser.displayName || null,
+                  email: currentUser.email || null,
+                  photoURL: currentUser.photoURL || null,
+                };
+              }
+              return m;
+            });
 
-    return () => unsub();
-  }, [teamId]);
+            // Owner first, then alphabetical. (At most one "admin" today,
+            // but the tie case is handled so this stays correct if that
+            // ever changes.)
+            filled.sort((a, b) => {
+              if (a.role === "admin" && b.role !== "admin") return -1;
+              if (b.role === "admin" && a.role !== "admin") return 1;
+              return (a.name || a.email || "").localeCompare(b.name || b.email || "");
+            });
+
+            if (!cancelled) {
+              setMembers(filled);
+              setLoading(false);
+            }
+          } catch (err) {
+            if (!cancelled) {
+              console.error("Failed to resolve member profiles:", err);
+              setLoadError("Couldn't load members — try refreshing.");
+              setLoading(false);
+            }
+          }
+        })();
+      },
+      err => {
+        if (cancelled) return;
+        console.error("Failed to watch team doc:", err);
+        setLoadError("Couldn't load members — try refreshing.");
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [teamId, currentUser]);
 
   return (
     <div style={{ flex: 1, overflowY: "auto" }}>
@@ -439,7 +524,8 @@ function MembersTab({ teamId, currentUser }) {
         </span>
       </div>
       {loading && <LoadingState label="Loading members…" />}
-      {!loading && members.length === 0 && (
+      {!loading && loadError && <ErrorState message={loadError} />}
+      {!loading && !loadError && members.length === 0 && (
         <EmptyState message="No members yet" description="Share the invite code to grow your team" />
       )}
       {members.map(m => <MemberCard key={m.id} member={m} />)}
@@ -551,8 +637,9 @@ function resizeImageToBase64(file, maxDimension = 1200, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
+    const cleanup = () => URL.revokeObjectURL(url);
     img.onload = () => {
-      URL.revokeObjectURL(url);
+      cleanup();
       let { width, height } = img;
       if (width > maxDimension || height > maxDimension) {
         if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
@@ -564,7 +651,10 @@ function resizeImageToBase64(file, maxDimension = 1200, quality = 0.82) {
       canvas.getContext("2d").drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
-    img.onerror = reject;
+    img.onerror = (e) => {
+      cleanup();
+      reject(e);
+    };
     img.src = url;
   });
 }
@@ -572,6 +662,7 @@ function resizeImageToBase64(file, maxDimension = 1200, quality = 0.82) {
 function PhotosTab({ teamId, currentUser }) {
   const [photos, setPhotos]       = useState([]);
   const [loading, setLoading]     = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption]     = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -579,26 +670,35 @@ function PhotosTab({ teamId, currentUser }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!teamId) { setPhotos([]); setLoading(false); return; }
+    if (!teamId) { setPhotos([]); setLoading(false); setLoadError(null); return; }
     setLoading(true);
+    setLoadError(null);
     const q = query(
       collection(db, "teams", teamId, "photos"),
       orderBy("createdAt", "desc")
     );
-    const unsub = onSnapshot(q, snap => {
-      setPhotos(snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: d.data().createdAt?.toDate?.() || null,
-      })));
-      setLoading(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      snap => {
+        setPhotos(snap.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+          createdAt: d.data().createdAt?.toDate?.() || null,
+        })));
+        setLoading(false);
+      },
+      err => {
+        console.error("Failed to load photos:", err);
+        setLoadError("Couldn't load photos — try refreshing.");
+        setLoading(false);
+      }
+    );
     return () => unsub();
   }, [teamId]);
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !currentUser || !teamId) return;
+    if (!file || !currentUser || !teamId || uploading) return;
     setError("");
 
     if (!file.type.startsWith("image/")) {
@@ -639,13 +739,22 @@ function PhotosTab({ teamId, currentUser }) {
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {loading && <LoadingState label="Loading photos…" />}
-        {!loading && photos.length === 0 && (
+        {!loading && loadError && <ErrorState message={loadError} />}
+        {!loading && !loadError && photos.length === 0 && (
           <EmptyState message="No photos yet" description="Upload the first photo below" />
         )}
         {photos.length > 0 && (
           <PhotoGrid photos={photos} onPhotoClick={setSelectedPhoto} />
         )}
       </div>
+
+      {/* Upload error banner — previously rendered inline inside the upload
+          bar's flex row, squeezed between the buttons; moved above it. */}
+      {error && (
+        <div style={{ padding: "8px 16px 0", fontSize: 12, color: THEME.red }}>
+          {error}
+        </div>
+      )}
 
       {/* Upload Bar */}
       <div style={{
@@ -663,11 +772,6 @@ function PhotosTab({ teamId, currentUser }) {
           style={{ display: "none" }}
           id="photo-upload-input"
         />
-        {error && (
-          <div style={{ padding: "0 16px 8px", fontSize: 12, color: THEME.red }}>
-            {error}
-          </div>
-        )}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
@@ -744,17 +848,30 @@ function TeamInfoTab({ team, currentUser }) {
   const [editing, setEditing]   = useState(false);
   const [desc, setDesc]         = useState(team?.description || "");
   const [saving, setSaving]     = useState(false);
-  const isAdmin = team?.members?.[currentUser?.uid]?.role === "admin"
-    || team?.createdBy === currentUser?.uid;
+  const [saveError, setSaveError] = useState(null);
+
+  // Bug fix: this previously checked `team.members[...]?.role` and
+  // `team.createdBy`, but the actual schema (see MembersTab) stores the
+  // owner as `team.ownerId` with no `members` map at all — so isAdmin was
+  // always false and the Edit button never appeared for the owner.
+  const isAdmin = team?.ownerId === currentUser?.uid;
+
+  // Keep the draft in sync if the underlying team doc changes (e.g. another
+  // admin edits it) while this tab isn't in edit mode.
+  useEffect(() => {
+    if (!editing) setDesc(team?.description || "");
+  }, [team?.description, editing]);
 
   const handleSave = async () => {
     if (!team?.id) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await updateDoc(doc(db, "teams", team.id), { description: desc.trim() });
       setEditing(false);
     } catch (err) {
       console.error("Save failed:", err);
+      setSaveError("Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }
@@ -793,6 +910,7 @@ function TeamInfoTab({ team, currentUser }) {
               onChange={e => setDesc(e.target.value)}
               rows={4}
               placeholder="Describe your team…"
+              disabled={saving}
               style={{
                 background: THEME.surface2,
                 border: `1.5px solid ${THEME.lime}`,
@@ -805,6 +923,9 @@ function TeamInfoTab({ team, currentUser }) {
                 outline: "none",
               }}
             />
+            {saveError && (
+              <div style={{ fontSize: 12, color: THEME.red }}>{saveError}</div>
+            )}
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={handleSave}
@@ -819,12 +940,13 @@ function TeamInfoTab({ team, currentUser }) {
                 {saving ? "Saving…" : "Save"}
               </button>
               <button
-                onClick={() => { setEditing(false); setDesc(team.description || ""); }}
+                onClick={() => { setEditing(false); setDesc(team.description || ""); setSaveError(null); }}
+                disabled={saving}
                 style={{
                   background: "none", color: THEME.muted,
                   border: `1px solid ${THEME.border}`, borderRadius: 8,
                   padding: "8px 16px", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: saving ? "not-allowed" : "pointer",
                 }}
               >
                 Cancel
@@ -936,7 +1058,18 @@ function ContentPanel({ activeTab, currentTeam, currentUser }) {
 export default function Dashboard() {
   const { currentTeam } = useTeam();
   const [activeTab, setActiveTab] = useState("announcements");
-  const currentUser = auth.currentUser;
+
+  // Bug fix: this used to read `auth.currentUser` once at initial render,
+  // which is frequently still `null` at that point (Firebase auth resolves
+  // asynchronously) and never updates again afterward — every child that
+  // depends on currentUser (compose form, "can I edit this" checks, etc.)
+  // could get stuck treating a logged-in user as logged-out. Subscribing to
+  // onAuthStateChanged keeps it live.
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, u => setCurrentUser(u));
+    return () => unsub();
+  }, []);
 
   const handleTabChange = useCallback(tabId => setActiveTab(tabId), []);
 
