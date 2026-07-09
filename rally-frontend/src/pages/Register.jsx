@@ -158,6 +158,7 @@ export default function Register() {
         teamIds: [],
         createdAt: serverTimestamp(),
       });
+      // New account created successfully — send them to team setup next.
       navigate('/team-setup');
     } catch (error) {
       console.error('Register error:', error);

@@ -1,9 +1,6 @@
 import LegalLayout from './LegalLayout';
 
-// Replace these before publishing:
 const COMPANY_NAME = 'Rally';
-const COMPANY_LEGAL_NAME = '[Rally Ltd — insert registered NZ company name]';
-const NZBN = '[insert NZBN]';
 const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 const LAST_UPDATED = '9 July 2026';
 
@@ -38,13 +35,12 @@ export default function Terms() {
 
       <h2 id="acceptance">1. Acceptance of these terms</h2>
       <p>
-        These Terms of Service (&ldquo;Terms&rdquo;) are an agreement between you and{' '}
-        {COMPANY_LEGAL_NAME}{NZBN !== '[insert NZBN]' && <> (NZBN {NZBN})</>}, trading as{' '}
-        {COMPANY_NAME} (&ldquo;{COMPANY_NAME}&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). By
-        creating an account or otherwise using the Rally app or website (the
-        &ldquo;Service&rdquo;), you agree to these Terms. If you're using Rally on behalf of a
-        school, club, or team, you're confirming you have the authority to agree to these Terms on
-        its behalf.
+        These Terms of Service (&ldquo;Terms&rdquo;) are an agreement between you and the individual
+        operating {COMPANY_NAME}, based in New Zealand (&ldquo;{COMPANY_NAME}&rdquo;,
+        &ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an account or otherwise using the Rally app
+        or website (the &ldquo;Service&rdquo;), you agree to these Terms. If you're using Rally on
+        behalf of a school, club, or team, you're confirming you have the authority to agree to
+        these Terms on its behalf.
       </p>
 
       <h2 id="service">2. The Service</h2>
@@ -99,10 +95,9 @@ export default function Terms() {
 
       <h2 id="ip">7. Our intellectual property</h2>
       <p>
-        Rally's software, branding, and design are owned by {COMPANY_LEGAL_NAME} or our licensors
-        and are protected by intellectual property laws. Other than the licence to use the Service
-        as intended, these Terms don't grant you any rights to our trademarks, logos, or underlying
-        technology.
+        Rally's software, branding, and design are owned by us or our licensors and are protected by
+        intellectual property laws. Other than the licence to use the Service as intended, these
+        Terms don't grant you any rights to our trademarks, logos, or underlying technology.
       </p>
 
       <h2 id="suspension">8. Suspension and termination</h2>

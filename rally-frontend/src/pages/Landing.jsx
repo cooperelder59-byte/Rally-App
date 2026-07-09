@@ -147,6 +147,10 @@ function FooterLogoSVG() {
 
 // Navigation Component
 function Navigation({ mobileOpen, onToggle, onNavigate }) {
+  const handleLinkClick = () => {
+    if (mobileOpen) onToggle();
+  };
+
   return (
     <header>
       <div className="header-inner">
@@ -161,18 +165,20 @@ function Navigation({ mobileOpen, onToggle, onNavigate }) {
             Get started
           </button>
         </nav>
-        <button 
-          className="hamburger" 
+        <button
+          className="hamburger"
           onClick={onToggle}
-          aria-label="Toggle mobile menu"
+          aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav"
         >
           <span></span><span></span><span></span>
         </button>
       </div>
       {mobileOpen && (
-        <div className="mobile-nav open">
+        <div id="mobile-nav" className="mobile-nav open">
           {NAV_LINKS.map(link => (
-            <a key={link.href} href={link.href}>{link.label}</a>
+            <a key={link.href} href={link.href} onClick={handleLinkClick}>{link.label}</a>
           ))}
           <a onClick={() => onNavigate('/register')}>Get started</a>
         </div>
@@ -201,12 +207,12 @@ function HeroSection({ onNavigate }) {
             <button onClick={() => onNavigate('/register')} className="btn btn-primary">
               Get started
             </button>
-            <a href="#features" className="btn btn-ghost">
-              See what's coming
+            <a href="#how-it-works" className="btn btn-ghost">
+              See how it works
             </a>
           </div>
         </div>
-        <div className="hero-gallery" style={{gap: '20px' }}>
+        <div className="hero-gallery">
           <div className="gallery-image-card">
             <div className="hero-image-glow"></div>
             <img src={juniorSoccer} alt="Junior soccer team" className="hero-image-img" />
@@ -580,7 +586,7 @@ export default function Landing() {
 
   return (
     <div>
-      <Navigation 
+      <Navigation
         mobileOpen={mobileNavOpen}
         onToggle={toggleMobileNav}
         onNavigate={handleNavigation}

@@ -1,9 +1,6 @@
 import LegalLayout from './LegalLayout';
 
-// Replace these before publishing:
 const COMPANY_NAME = 'Rally';
-const COMPANY_LEGAL_NAME = '[Rally Ltd — insert registered NZ company name]';
-const NZBN = '[insert NZBN]';
 const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 const LAST_UPDATED = '9 July 2026';
 
@@ -38,11 +35,11 @@ export default function Privacy() {
       <h2 id="who-we-are">1. Who we are</h2>
       <p>
         {COMPANY_NAME} is a team communication, scheduling, and performance-tracking platform for
-        school sports teams, clubs, and similar groups, operated by {COMPANY_LEGAL_NAME}
-        {NZBN !== '[insert NZBN]' && <> (NZBN {NZBN})</>}, based in New Zealand. This policy explains
-        how we collect, use, store, and disclose personal information in connection with the Rally
-        app and website (the &ldquo;Service&rdquo;), and applies to coaches, managers, players,
-        parents/guardians, school administrators, and anyone else who uses Rally.
+        school sports teams, clubs, and similar groups, operated by an individual based in New
+        Zealand. This policy explains how we collect, use, store, and disclose personal information
+        in connection with the Rally app and website (the &ldquo;Service&rdquo;), and applies to
+        coaches, managers, players, parents/guardians, school administrators, and anyone else who
+        uses Rally.
       </p>
       <p>
         We handle personal information in accordance with the Privacy Act 2020 and the 13
