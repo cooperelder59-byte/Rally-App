@@ -16,6 +16,7 @@
   gap: 1.5rem;
   overflow: hidden;
   transition: width 0.3s ease, padding 0.3s ease;
+  z-index: 6; /* above the overlay so the sidebar itself is never dimmed */
 }
 
 .sidebar.open {
@@ -91,6 +92,7 @@
   font-size: 0.65rem;
   color: #888;
   margin-left: 8px;
+  transition: transform 0.15s ease;
 }
 
 .team-switcher-menu {
@@ -148,6 +150,7 @@
   font-weight: 400;
   border-left: 3px solid transparent;
   transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
 }
 
 .sidebar-link:hover {
@@ -185,6 +188,7 @@
   font-weight: 400;
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -209,6 +213,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #000000;
+  white-space: nowrap;
   transition: filter 0.15s ease;
 }
 
@@ -216,17 +221,29 @@
   filter: brightness(0.9);
 }
 
-/* SIDEBAR OVERLAY (mobile) */
+/* SIDEBAR OVERLAY (mobile only) —
+   Rendering is gated in JS (isMobile && open), so by the time `.visible`
+   is applied we already know we're on a small screen. The media query
+   below is a belt-and-suspenders guard in case the component ever renders
+   this without that check (e.g. SSR, a future refactor). */
 .sidebar-overlay {
   display: none;
 }
 
-.sidebar-overlay.visible {
-  display: block;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 5;
+@media (max-width: 767px) {
+  .sidebar-overlay.visible {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 5;
+    animation: overlay-fade-in 0.15s ease;
+  }
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* MAIN CONTENT */
@@ -274,4 +291,14 @@
   padding: 2rem;
   overflow: auto;
   color: #eee;
+}
+
+/* On mobile, the sidebar becomes an overlay panel rather than pushing
+   content — it sits above .sidebar-overlay and slides in over the page. */
+@media (max-width: 767px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+  }
 }

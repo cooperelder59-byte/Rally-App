@@ -142,6 +142,7 @@ function SidebarNav({ activePath, onNavigate }) {
 
 function Sidebar({
   open,
+  isMobile,
   teamMenuOpen, onToggleTeamMenu,
   teams, currentTeam, onSwitchTeam, onCreateTeam,
   activeNavPath,
@@ -151,11 +152,15 @@ function Sidebar({
   onCloseSidebar,
   onNavLinkClick,
 }) {
+  // The dimming overlay only makes sense on mobile, where the sidebar is an
+  // overlay panel floating above the page. On desktop the sidebar pushes
+  // the layout instead, so the overlay must never render there.
+  const overlayVisible = open && isMobile;
+
   return (
     <>
-      {/* Dims the page and closes the sidebar on tap — active only on mobile, see CSS */}
       <div
-        className={`sidebar-overlay${open ? ' visible' : ''}`}
+        className={`sidebar-overlay${overlayVisible ? ' visible' : ''}`}
         onClick={onCloseSidebar}
         aria-hidden="true"
       />
@@ -255,6 +260,18 @@ export default function MainLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Lock page scroll while the mobile overlay sidebar is open, so the
+  // page underneath doesn't scroll behind the dimmed panel.
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [isMobile, sidebarOpen]);
+
   // Settings isn't in NAV_ITEMS (it lives in the sidebar footer, not the
   // main nav), so give it its own label here.
   const currentNavLabel =
@@ -307,6 +324,7 @@ export default function MainLayout() {
     <div className="layout">
       <Sidebar
         open={sidebarOpen}
+        isMobile={isMobile}
         teamMenuOpen={teamMenuOpen}
         onToggleTeamMenu={handleToggleTeamMenu}
         teams={teams}
