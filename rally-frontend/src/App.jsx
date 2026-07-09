@@ -26,6 +26,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/team-setup" element={<TeamSetup />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           {/* App layout routes */}
           <Route element={<MainLayout />}>
@@ -35,8 +37,6 @@ export default function App() {
             <Route path="/roster" element={<Roster />} />
             <Route path="/performance" element={<Performance />} />
             <Route path="/settings" element={<UserSettings />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
           </Route>
 
         </Routes>

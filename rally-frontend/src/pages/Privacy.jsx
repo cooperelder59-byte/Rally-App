@@ -4,7 +4,7 @@ import LegalLayout from './LegalLayout';
 const COMPANY_NAME = 'Rally';
 const COMPANY_LEGAL_NAME = '[Rally Ltd — insert registered NZ company name]';
 const NZBN = '[insert NZBN]';
-const CONTACT_EMAIL = 'privacy@rallyapp.co.nz';
+const CONTACT_EMAIL = 'rallyoffical387@gmail.com';
 const LAST_UPDATED = '9 July 2026';
 
 export default function Privacy() {
