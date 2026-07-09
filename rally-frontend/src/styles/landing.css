@@ -556,17 +556,64 @@ footer { border-top: 1px solid var(--border); padding: 44px 0; }
   letter-spacing: 0.04em;
 }
 
+/* Team switcher — dropdown pill sitting above the nav items */
+.mockup-team-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #161616;
+  border: 1px solid #242424;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.mockup-team-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c8ff3d;
+  flex-shrink: 0;
+}
+
+.mockup-team-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #eee;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mockup-chevron {
+  font-size: 0.7rem;
+  color: #666;
+  line-height: 1;
+}
+
 .mockup-nav-item {
   font-size: 0.75rem;
   color: #888;
   padding: 0.4rem 0.5rem;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .mockup-nav-item.active {
   background: rgba(200, 255, 61, 0.1);
   color: #c8ff3d;
   border-left: 2px solid #c8ff3d;
+}
+
+.mockup-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c8ff3d;
+  flex-shrink: 0;
 }
 
 .mockup-main {

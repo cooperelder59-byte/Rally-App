@@ -17,11 +17,12 @@ const FEATURES = [
     type: 'main',
     label: 'Communication',
     title: 'Keep everyone in the loop.',
-    description: 'Post announcements, share updates, and reach every member of your team or club — no more buried messages or dead group chats.',
+    description: 'Post announcements, share updates, and reach every member of your team — no more buried messages or dead group chats.',
     items: [
       'Team-wide and group-specific posts',
       'Pinned announcements',
-      'Push and email notifications'
+      'Push and email notifications',
+      'Switch between every team you\'re part of'
     ]
   },
   {
@@ -37,13 +38,13 @@ const FEATURES = [
   },
   {
     type: 'card',
-    label: 'Attendance',
-    description: 'Know who\'s in, out, or unsure before every training and event. No more last-minute scrambling.'
+    label: 'Performance',
+    description: 'Coaches track player development, session notes, and progress over the season — all in one view.'
   },
   {
     type: 'card',
-    label: 'Member management',
-    description: 'Rosters, roles, and permissions for coaches, admins, and players — all in one place.'
+    label: 'Roster',
+    description: 'Positions, contact details, and full team rosters — always up to date and easy to manage.'
   }
 ];
 
@@ -61,18 +62,18 @@ const STEPS = [
   {
     num: '03',
     title: 'Run your group',
-    description: 'Post updates, track attendance, and keep everyone organised all season long.'
+    description: 'Post updates, track performance, and keep everyone organised all season long.'
   }
 ];
 
 const AUDIENCE = [
   {
     role: 'Coaches & managers',
-    description: 'Less time chasing people and sorting logistics. More time coaching. Rally handles the admin so you don\'t have to.'
+    description: 'Track performance, post updates, and run every team you coach from one place — no more chasing people down.'
   },
   {
     role: 'Students & players',
-    description: 'One app for every group you\'re in. Never miss a practice, a payment, or an update again.'
+    description: 'One app for every group you\'re in. Never miss a practice, a message, or an update again.'
   },
   {
     role: 'Schools & admins',
@@ -152,9 +153,9 @@ function HeroSection({ onNavigate }) {
             <span className="accent">team together.</span>
           </h1>
           <p>
-            Rally is the platform built for school sports teams, clubs, and groups.
-            One place for communication, scheduling, attendance, and coordination —
-            so coaches and students can focus on what matters.
+            Rally is the communication platform built for school sports teams, clubs, and groups.
+            Messaging, scheduling, rosters, and performance tracking — all in one place, across
+            every team you're part of.
           </p>
           <div className="hero-actions">
             <button onClick={() => onNavigate('/register')} className="btn btn-primary">
@@ -195,14 +196,20 @@ function ProductMockup() {
           <div className="mockup-body">
             <div className="mockup-sidebar">
               <div className="mockup-logo">RALLY</div>
-              {['Dashboard', 'Messages', 'Schedule', 'Performance', 'Team'].map((item, idx) => (
+              <div className="mockup-team-switcher">
+                <span className="mockup-team-dot"></span>
+                <span className="mockup-team-name">Fulham Juniors U14</span>
+                <span className="mockup-chevron">⌄</span>
+              </div>
+              {['Dashboard', 'Messages', 'Schedule', 'Roster', 'Performance'].map((item, idx) => (
                 <div key={item} className={`mockup-nav-item ${idx === 0 ? 'active' : ''}`}>
-                  {item}
+                  <span>{item}</span>
+                  {idx === 0 && <span className="mockup-nav-dot"></span>}
                 </div>
               ))}
             </div>
             <div className="mockup-main">
-              {['Upcoming Events', 'Messages', 'Team Activity', 'Performance'].map(card => (
+              {['Upcoming Events', 'Messages', 'Performance', 'Roster'].map(card => (
                 <div key={card} className="mockup-card">
                   <div className="mockup-card-label">{card}</div>
                   <div className="mockup-card-line"></div>
@@ -304,7 +311,7 @@ function AboutSection() {
       <div className="container container-narrow">
         <div className="eyebrow">About Rally</div>
         <h2>Built for school sports and clubs.</h2>
-        <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, and attendance.</p>
+        <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, rosters, and performance tracking.</p>
         <p>Create your team, invite your players, and get your season organised in minutes.</p>
       </div>
     </section>
