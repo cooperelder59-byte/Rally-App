@@ -1,44 +1,82 @@
+/* ─── Design tokens ──────────────────────────────────────────────────── */
+:root {
+  --rally-bg: #0a0a0a;
+  --rally-surface: #0d0d0d;
+  --rally-surface-2: #161616;
+  --rally-surface-3: #1c1c1c;
+  --rally-border: #1f1f1f;
+  --rally-border-strong: #2a2a2a;
+  --rally-text: #f2f2f2;
+  --rally-text-dim: #bbb;
+  --rally-text-muted: #777;
+  --rally-primary: #c8ff3d;
+  --rally-primary-dim: rgba(200, 255, 61, 0.1);
+  --rally-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-width: 240px;
+}
+
 .layout {
   display: flex;
   min-height: 100vh;
-  background-color: #0a0a0a;
+  background-color: var(--rally-bg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* SIDEBAR — pinned to the viewport, doesn't scroll with the page */
+/* ─── Sidebar ─────────────────────────────────────────────────────────── */
 .sidebar {
   position: sticky;
   top: 0;
   height: 100vh;
-  background-color: #0d0d0d;
-  border-right: 1px solid #1f1f1f;
+  background-color: var(--rally-surface);
+  border-right: 1px solid var(--rally-border);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
   overflow: hidden;
-  transition: width 0.3s ease, padding 0.3s ease;
+  transition: width 0.25s var(--rally-ease), padding 0.25s var(--rally-ease);
   z-index: 6; /* above the overlay so the sidebar itself is never dimmed */
+  flex-shrink: 0;
 }
 
 .sidebar.open {
-  width: 240px;
+  width: var(--sidebar-width);
   padding: 1.5rem 1rem;
 }
 
 .sidebar.closed {
   width: 0;
   padding: 0;
+  border-right-color: transparent;
 }
 
 .sidebar-header {
   padding-bottom: 1rem;
-  border-bottom: 1px solid #1f1f1f;
+  border-bottom: 1px solid var(--rally-border);
+  min-width: calc(var(--sidebar-width) - 2rem); /* keeps content from wrapping mid-collapse */
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-logo:hover {
+  opacity: 0.85;
+}
+
+.sidebar-logo:focus-visible,
+.sidebar-settings:focus-visible,
+.sidebar-logout:focus-visible,
+.sidebar-link:focus-visible,
+.team-switcher-btn:focus-visible,
+.team-switcher-item:focus-visible,
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--rally-primary);
+  outline-offset: 2px;
 }
 
 .sidebar-logo h2 {
@@ -46,27 +84,28 @@
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 18px;
   font-weight: 800;
-  color: #c8ff3d;
-  letter-spacing: 0.04em;
+  color: var(--rally-primary);
+  letter-spacing: 0.05em;
 }
 
 .sidebar-tag {
   margin: 0;
   font-size: 11px;
-  color: #777;
+  color: var(--rally-text-muted);
 }
 
-/* TEAM SWITCHER */
+/* ─── Team switcher ──────────────────────────────────────────────────── */
 .team-switcher {
   position: relative;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #1f1f1f;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--rally-border);
+  min-width: calc(var(--sidebar-width) - 2rem);
 }
 
 .team-switcher-btn {
   width: 100%;
-  background: #161616;
-  border: 1px solid #2a2a2a;
+  background: var(--rally-surface-2);
+  border: 1px solid var(--rally-border-strong);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   color: #fff;
@@ -76,10 +115,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .team-switcher-btn:hover {
-  border-color: #c8ff3d;
+  border-color: var(--rally-primary);
+  background: #191919;
 }
 
 .team-switcher-name {
@@ -92,19 +133,28 @@
   font-size: 0.65rem;
   color: #888;
   margin-left: 8px;
-  transition: transform 0.15s ease;
+  transition: transform 0.18s var(--rally-ease);
+  flex-shrink: 0;
 }
 
 .team-switcher-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #161616;
-  border: 1px solid #2a2a2a;
+  background: var(--rally-surface-3);
+  border: 1px solid var(--rally-border-strong);
   border-radius: 8px;
   overflow: hidden;
   z-index: 10;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  animation: menu-pop-in 0.14s var(--rally-ease);
+  transform-origin: top;
+}
+
+@keyframes menu-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scaleY(0.96); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 
 .team-switcher-item {
@@ -112,45 +162,62 @@
   text-align: left;
   background: transparent;
   border: none;
-  padding: 0.6rem 0.75rem;
+  padding: 0.65rem 0.8rem;
   color: #ccc;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .team-switcher-item:hover {
-  background: #1f1f1f;
+  background: #232323;
+  color: #fff;
 }
 
 .team-switcher-item.active {
-  color: #c8ff3d;
+  color: var(--rally-primary);
   font-weight: 600;
+  background: var(--rally-primary-dim);
 }
 
 .team-switcher-item.add {
-  border-top: 1px solid #2a2a2a;
-  color: #c8ff3d;
+  border-top: 1px solid var(--rally-border-strong);
+  color: var(--rally-primary);
 }
 
-/* SIDEBAR NAV — scrolls internally if it overflows, header/footer stay fixed */
+/* ─── Sidebar nav ────────────────────────────────────────────────────── */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   flex: 1;
   overflow-y: auto;
+  min-width: calc(var(--sidebar-width) - 2rem);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rally-border-strong) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--rally-border-strong);
+  border-radius: 3px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .sidebar-link {
   text-decoration: none;
   padding: 10px 12px;
   border-radius: 6px;
-  color: #bbb;
+  color: var(--rally-text-dim);
   font-size: 14px;
   font-weight: 400;
   border-left: 3px solid transparent;
-  transition: background-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .sidebar-link:hover {
@@ -159,19 +226,20 @@
 }
 
 .sidebar-link.active {
-  background-color: rgba(200, 255, 61, 0.1);
-  color: #c8ff3d;
+  background-color: var(--rally-primary-dim);
+  color: var(--rally-primary);
   font-weight: 600;
-  border-left: 3px solid #c8ff3d;
+  border-left: 3px solid var(--rally-primary);
 }
 
-/* SIDEBAR FOOTER */
+/* ─── Sidebar footer ─────────────────────────────────────────────────── */
 .sidebar-footer {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #1f1f1f;
+  border-top: 1px solid var(--rally-border);
+  min-width: calc(var(--sidebar-width) - 2rem);
 }
 
 .sidebar-settings {
@@ -183,7 +251,7 @@
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #bbb;
+  color: var(--rally-text-dim);
   font-size: 14px;
   font-weight: 400;
   cursor: pointer;
@@ -198,34 +266,34 @@
 }
 
 .sidebar-settings.active {
-  background-color: rgba(200, 255, 61, 0.1);
-  color: #c8ff3d;
+  background-color: var(--rally-primary-dim);
+  color: var(--rally-primary);
   font-weight: 600;
 }
 
 .sidebar-logout {
   width: 100%;
   padding: 10px 12px;
-  background-color: #c8ff3d;
+  background-color: var(--rally-primary);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #000000;
+  color: #000;
   white-space: nowrap;
-  transition: filter 0.15s ease;
+  transition: filter 0.15s ease, transform 0.1s ease;
 }
 
 .sidebar-logout:hover {
-  filter: brightness(0.9);
+  filter: brightness(0.92);
 }
 
-/* SIDEBAR OVERLAY (mobile only) —
-   Rendering is gated in JS (isMobile && open), so by the time `.visible`
-   is applied we already know we're on a small screen. The media query
-   below is a belt-and-suspenders guard in case the component ever renders
-   this without that check (e.g. SSR, a future refactor). */
+.sidebar-logout:active {
+  transform: scale(0.98);
+}
+
+/* ─── Overlay (mobile only) ──────────────────────────────────────────── */
 .sidebar-overlay {
   display: none;
 }
@@ -236,8 +304,10 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     z-index: 5;
-    animation: overlay-fade-in 0.15s ease;
+    animation: overlay-fade-in 0.18s ease;
   }
 }
 
@@ -246,7 +316,7 @@
   to   { opacity: 1; }
 }
 
-/* MAIN CONTENT */
+/* ─── Main content ───────────────────────────────────────────────────── */
 .main-content {
   flex: 1;
   display: flex;
@@ -255,8 +325,8 @@
 }
 
 .topbar {
-  background-color: #0d0d0d;
-  border-bottom: 1px solid #1f1f1f;
+  background-color: var(--rally-surface);
+  border-bottom: 1px solid var(--rally-border);
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
@@ -270,12 +340,17 @@
   background: transparent;
   border: none;
   font-size: 20px;
+  line-height: 1;
   cursor: pointer;
-  color: #ccc;
+  color: var(--rally-text-dim);
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .sidebar-toggle:hover {
-  color: #c8ff3d;
+  color: var(--rally-primary);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .topbar-title {
@@ -283,6 +358,7 @@
   font-size: 18px;
   font-weight: 600;
   font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.01em;
   color: #fff;
 }
 
@@ -290,15 +366,47 @@
   flex: 1;
   padding: 2rem;
   overflow: auto;
-  color: #eee;
+  color: var(--rally-text);
 }
 
-/* On mobile, the sidebar becomes an overlay panel rather than pushing
-   content — it sits above .sidebar-overlay and slides in over the page. */
+/* Smooth reveal for whatever loads in the outlet — subtle, not showy */
+.page-content > * {
+  animation: page-fade-in 0.2s ease;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Mobile ──────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .topbar {
+    padding: 1rem;
+  }
+
+  .page-content {
+    padding: 1.25rem;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .team-switcher-arrow,
+  .team-switcher-menu,
+  .sidebar-overlay.visible,
+  .page-content > *,
+  .sidebar-toggle,
+  .sidebar-logout {
+    animation: none !important;
+    transition: none !important;
   }
 }

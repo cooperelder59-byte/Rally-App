@@ -128,6 +128,7 @@ function SidebarNav({ activePath, onNavigate }) {
             key={item.path}
             to={item.path}
             onClick={onNavigate}
+            aria-current={isActive ? 'page' : undefined}
             className={`sidebar-link${isActive ? ' active' : ''}`}
           >
             {item.label}
@@ -195,6 +196,7 @@ function Sidebar({
           <button
             type="button"
             className={`sidebar-settings${activeNavPath === '/settings' ? ' active' : ''}`}
+            aria-current={activeNavPath === '/settings' ? 'page' : undefined}
             onClick={onSettingsClick}
           >
             <GearIcon /> Settings
@@ -297,6 +299,17 @@ export default function MainLayout() {
         document.body.style.overflow = previousOverflow;
       };
     }
+  }, [isMobile, sidebarOpen]);
+
+  // Let Escape close the mobile overlay sidebar, same as it closes the
+  // team-switcher menu.
+  useEffect(() => {
+    if (!(isMobile && sidebarOpen)) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobile, sidebarOpen]);
 
   // Settings isn't in NAV_ITEMS (it lives in the sidebar footer, not the
