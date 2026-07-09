@@ -177,8 +177,181 @@ function HeroSection({ onNavigate }) {
   );
 }
 
-// Product Mockup Component
+// Product Mockup Component — clickable tabs, each showing a lightweight
+// recreation of the real screen (placeholder data, not real member info).
+const MOCKUP_TABS = ['Dashboard', 'Messages', 'Schedule', 'Roster', 'Performance'];
+
+function MockupDashboard() {
+  const posts = [
+    { initial: 'C', name: 'Coach Rivera', date: 'Jun 20', text: 'Great session today, well done everyone!' },
+    { initial: 'C', name: 'Coach Rivera', date: 'Jun 20', text: 'Reminder — kit wash rota starts this week.' }
+  ];
+  return (
+    <div className="mockup-screen">
+      <div className="mockup-subtabs">
+        {['Announcements', 'Members', 'Photos', 'Team Info'].map((t, i) => (
+          <span key={t} className={`mockup-subtab ${i === 0 ? 'active' : ''}`}>{t}</span>
+        ))}
+      </div>
+      <div className="mockup-invite-bar">
+        <span className="mockup-invite-label">INVITE CODE</span>
+        <span className="mockup-invite-code">RALLY-6XLRCD</span>
+        <span className="mockup-copy-btn">Copy</span>
+      </div>
+      <div className="mockup-panel">
+        <div className="mockup-panel-title">Announcements</div>
+        {posts.map((p, i) => (
+          <div key={i} className="mockup-post">
+            <div className="mockup-avatar">{p.initial}</div>
+            <div className="mockup-post-body">
+              <div className="mockup-post-meta"><b>{p.name}</b> {p.date}</div>
+              <div className="mockup-post-text">{p.text}</div>
+            </div>
+          </div>
+        ))}
+        <div className="mockup-post-input">
+          <div className="mockup-avatar small">Y</div>
+          <span className="mockup-input-placeholder">Post an announcement…</span>
+          <span className="mockup-post-btn">Post</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MockupMessages() {
+  return (
+    <div className="mockup-screen mockup-screen-split">
+      <div className="mockup-thread-list">
+        <div className="mockup-thread active">
+          <div className="mockup-avatar small">T</div>
+          <div>
+            <div className="mockup-thread-name">Coach Rivera</div>
+            <div className="mockup-thread-sub">Nice work today!</div>
+          </div>
+        </div>
+        <div className="mockup-thread">
+          <div className="mockup-avatar small">T</div>
+          <div>
+            <div className="mockup-thread-name">Team Announcements</div>
+            <div className="mockup-thread-sub">3 new posts</div>
+          </div>
+        </div>
+      </div>
+      <div className="mockup-chat-panel">
+        <div className="mockup-chat-header">Coach Rivera</div>
+        <div className="mockup-chat-empty" />
+        <div className="mockup-chat-input">
+          <span className="mockup-input-placeholder">Type a message…</span>
+          <span className="mockup-send-btn">➔</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MockupSchedule() {
+  return (
+    <div className="mockup-screen">
+      <div className="mockup-screen-header">
+        <div>
+          <div className="mockup-eyebrow-sm">FULHAM JUNIORS U14</div>
+          <div className="mockup-screen-title">Schedule</div>
+        </div>
+        <span className="mockup-cta-btn">+ New Event</span>
+      </div>
+      <div className="mockup-subtabs">
+        {['Upcoming', 'Past', 'All'].map((t, i) => (
+          <span key={t} className={`mockup-subtab ${i === 0 ? 'active' : ''}`}>{t}</span>
+        ))}
+      </div>
+      <div className="mockup-empty-state">
+        <div className="mockup-empty-icon">🗓</div>
+        <div className="mockup-empty-title">No upcoming events</div>
+        <span className="mockup-ghost-btn">+ Create one</span>
+      </div>
+    </div>
+  );
+}
+
+function MockupRoster() {
+  const members = [
+    { initial: 'J', name: 'J. Alvarez', badge: 'Player', role: 'Midfielder' },
+    { initial: 'R', name: 'Coach Rivera', badge: 'Coach', role: 'Head Coach', accent: true }
+  ];
+  return (
+    <div className="mockup-screen">
+      <div className="mockup-screen-header">
+        <div>
+          <div className="mockup-eyebrow-sm">FULHAM JUNIORS U14</div>
+          <div className="mockup-screen-title">Roster</div>
+        </div>
+        <span className="mockup-member-count">2 members</span>
+      </div>
+      <div className="mockup-search">Search by name or position…</div>
+      <div className="mockup-section-label">Players &amp; coaches</div>
+      {members.map((m, i) => (
+        <div key={i} className="mockup-member-row">
+          <div className="mockup-avatar">{m.initial}</div>
+          <div className="mockup-member-info">
+            <div className="mockup-member-name">
+              {m.name}
+              <span className={`mockup-badge ${m.accent ? 'coach' : ''}`}>{m.badge}</span>
+            </div>
+            <div className="mockup-member-role">{m.role}</div>
+          </div>
+          <span className="mockup-edit-btn">Edit</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MockupPerformance() {
+  const stats = [
+    { label: 'Pass Accuracy', value: '84%' },
+    { label: 'Shots/Match', value: '2.3' },
+    { label: 'Tackles', value: '14' },
+    { label: 'Interceptions', value: '9' }
+  ];
+  return (
+    <div className="mockup-screen">
+      <div className="mockup-screen-title">Performance</div>
+      <div className="mockup-eyebrow-sm" style={{ marginBottom: '0.9rem' }}>FULHAM JUNIORS U14 · SEASON 2025–26</div>
+      <div className="mockup-panel">
+        <div className="mockup-panel-title">Player statistics</div>
+        <div className="mockup-perf-row mockup-perf-head">
+          <span>Player</span><span>Apps</span><span>Goals</span><span>Rating</span>
+        </div>
+        <div className="mockup-perf-row">
+          <span className="mockup-perf-name"><span className="mockup-avatar small">J</span> J. Alvarez</span>
+          <span>12</span><span className="accent-text">4</span><span>7.8</span>
+        </div>
+      </div>
+      <div className="mockup-stats-card">
+        {stats.map(s => (
+          <div key={s.label} className="mockup-stat-row">
+            <span>{s.label}</span>
+            <span className="accent-text">{s.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const MOCKUP_SCREENS = {
+  Dashboard: MockupDashboard,
+  Messages: MockupMessages,
+  Schedule: MockupSchedule,
+  Roster: MockupRoster,
+  Performance: MockupPerformance
+};
+
 function ProductMockup() {
+  const [activeTab, setActiveTab] = useState('Dashboard');
+  const ActiveScreen = MOCKUP_SCREENS[activeTab];
+
   return (
     <section className="section" id="preview">
       <div className="container">
@@ -201,21 +374,20 @@ function ProductMockup() {
                 <span className="mockup-team-name">Fulham Juniors U14</span>
                 <span className="mockup-chevron">⌄</span>
               </div>
-              {['Dashboard', 'Messages', 'Schedule', 'Roster', 'Performance'].map((item, idx) => (
-                <div key={item} className={`mockup-nav-item ${idx === 0 ? 'active' : ''}`}>
+              {MOCKUP_TABS.map(item => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`mockup-nav-item ${activeTab === item ? 'active' : ''}`}
+                  onClick={() => setActiveTab(item)}
+                >
                   <span>{item}</span>
-                  {idx === 0 && <span className="mockup-nav-dot"></span>}
-                </div>
+                  {activeTab === item && <span className="mockup-nav-dot"></span>}
+                </button>
               ))}
             </div>
-            <div className="mockup-main">
-              {['Upcoming Events', 'Messages', 'Performance', 'Roster'].map(card => (
-                <div key={card} className="mockup-card">
-                  <div className="mockup-card-label">{card}</div>
-                  <div className="mockup-card-line"></div>
-                  <div className="mockup-card-line short"></div>
-                </div>
-              ))}
+            <div className="mockup-main mockup-main-single">
+              <ActiveScreen />
             </div>
           </div>
         </div>
