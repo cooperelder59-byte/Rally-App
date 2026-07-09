@@ -229,36 +229,63 @@ function Topbar({ onToggleSidebar, sidebarOpen, currentNavLabel }) {
 
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 
-function getIsMobile() {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth < MOBILE_BREAKPOINT;
-}
+// NOTE: we deliberately do NOT use window.innerWidth here. If this layout is
+// ever rendered inside an iframe, a preview pane, a split panel, or any other
+// embedded/constrained container, window.innerWidth reflects that container's
+// width — not what the layout itself is actually rendered at — and the
+// mobile/desktop detection silently goes wrong (e.g. "isMobile" stays true
+// on what looks like a full desktop screen, so the mobile-only dimming
+// overlay never turns off). Measuring the layout element itself with a
+// ResizeObserver is accurate no matter how the page is embedded.
 
 export default function MainLayout() {
-  const [isMobile, setIsMobile] = useState(getIsMobile);
-  // Sidebar starts open on desktop (a persistent panel) and closed on
-  // mobile (an overlay you open on demand).
-  const [sidebarOpen, setSidebarOpen] = useState(() => !getIsMobile());
+  const layoutRef = useRef(null);
+  // We don't know the real width until the first measurement comes in, so
+  // start as "not mobile" / sidebar open — matches desktop, the common case,
+  // and gets corrected within a frame if we're actually narrow.
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { teams, currentTeam, switchTeam } = useTeam();
 
-  // Keep isMobile in sync, and snap the sidebar to the sensible default
-  // whenever we cross the breakpoint (e.g. rotating a tablet).
+  // Measure the actual rendered width of the layout container (not the
+  // window — see note above) and keep isMobile in sync. Sidebar snaps to
+  // the sensible default whenever we cross the breakpoint, including on
+  // the very first measurement.
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = getIsMobile();
+    const node = layoutRef.current;
+    if (!node) return;
+
+    let isFirstMeasurement = true;
+
+    const handleWidth = (width) => {
+      const mobile = width < MOBILE_BREAKPOINT;
       setIsMobile((prevMobile) => {
-        if (prevMobile !== mobile) {
+        if (isFirstMeasurement || prevMobile !== mobile) {
           setSidebarOpen(!mobile);
         }
         return mobile;
       });
+      isFirstMeasurement = false;
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    if (typeof ResizeObserver === 'undefined') {
+      // Fallback for environments without ResizeObserver support.
+      handleWidth(node.clientWidth);
+      const handleResize = () => handleWidth(node.clientWidth);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      handleWidth(entries[0]?.contentRect?.width ?? node.clientWidth);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
+
 
   // Lock page scroll while the mobile overlay sidebar is open, so the
   // page underneath doesn't scroll behind the dimmed panel.
@@ -321,7 +348,7 @@ export default function MainLayout() {
   }, [navigate]);
 
   return (
-    <div className="layout">
+    <div className="layout" ref={layoutRef}>
       <Sidebar
         open={sidebarOpen}
         isMobile={isMobile}
