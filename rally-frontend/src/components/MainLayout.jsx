@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useTeam } from '../context/TeamContext';
+import '../styles/main-layout.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -15,12 +16,13 @@ const NAV_ITEMS = [
 ];
 
 const PRIMARY = '#c8ff3d';
+const MOBILE_BREAKPOINT = 768;
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 
 function RallyLogo() {
   return (
-    <svg width="26" height="26" viewBox="0 0 40 32" fill="none" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 40 32" fill="none" aria-hidden="true">
       <polygon points="0,0 13,16 0,32 7,32 20,16 7,0"   fill={PRIMARY} />
       <polygon points="10,0 23,16 10,32 17,32 30,16 17,0" fill={PRIMARY} opacity=".75" />
       <polygon points="20,0 33,16 20,32 27,32 40,16 27,0" fill={PRIMARY} opacity=".5" />
@@ -48,33 +50,64 @@ function GearIcon() {
 // ─── Team Switcher ────────────────────────────────────────────────────────────
 
 function TeamSwitcher({ teamMenuOpen, onToggle, teams, currentTeam, onSwitch, onCreateTeam }) {
+  const containerRef = useRef(null);
+
+  // Close the menu on outside click / Escape.
+  useEffect(() => {
+    if (!teamMenuOpen) return;
+
+    const handlePointerDown = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        onToggle();
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onToggle();
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [teamMenuOpen, onToggle]);
+
   return (
-    <div style={styles.teamSwitcher}>
-      <button style={styles.teamBtn} onClick={onToggle} aria-label="Switch team">
-        <span style={styles.teamDot} />
-        <span style={styles.teamName}>{currentTeam?.name || 'No team'}</span>
-        <span style={{ ...styles.teamArrow, transform: teamMenuOpen ? 'rotate(180deg)' : 'none' }}>
+    <div className="team-switcher" ref={containerRef}>
+      <button
+        type="button"
+        className="team-switcher-btn"
+        onClick={onToggle}
+        aria-label="Switch team"
+        aria-haspopup="menu"
+        aria-expanded={teamMenuOpen}
+      >
+        <span className="team-switcher-name">{currentTeam?.name || 'No team'}</span>
+        <span className="team-switcher-arrow" style={{ transform: teamMenuOpen ? 'rotate(180deg)' : 'none' }}>
           ⌄
         </span>
       </button>
 
       {teamMenuOpen && (
-        <div style={styles.teamMenu}>
+        <div className="team-switcher-menu" role="menu">
           {teams.map(team => (
             <button
               key={team.id}
-              style={{
-                ...styles.teamMenuItem,
-                ...(currentTeam?.id === team.id ? styles.teamMenuItemActive : {}),
-              }}
+              type="button"
+              role="menuitem"
+              className={`team-switcher-item${currentTeam?.id === team.id ? ' active' : ''}`}
               onClick={() => onSwitch(team.id)}
             >
-              {currentTeam?.id === team.id && <span style={styles.teamCheck}>✓</span>}
               {team.name}
             </button>
           ))}
-          <div style={styles.teamMenuDivider} />
-          <button style={{ ...styles.teamMenuItem, ...styles.teamMenuCreate }} onClick={onCreateTeam}>
+          <button
+            type="button"
+            role="menuitem"
+            className="team-switcher-item add"
+            onClick={onCreateTeam}
+          >
             + Create or join a team
           </button>
         </div>
@@ -85,22 +118,19 @@ function TeamSwitcher({ teamMenuOpen, onToggle, teams, currentTeam, onSwitch, on
 
 // ─── Sidebar Nav ──────────────────────────────────────────────────────────────
 
-function SidebarNav({ activePath }) {
+function SidebarNav({ activePath, onNavigate }) {
   return (
-    <nav style={styles.nav} aria-label="Main navigation">
+    <nav className="sidebar-nav" aria-label="Main navigation">
       {NAV_ITEMS.map(item => {
         const isActive = activePath === item.path;
         return (
           <Link
             key={item.path}
             to={item.path}
-            style={{
-              ...styles.navLink,
-              ...(isActive ? styles.navLinkActive : {}),
-            }}
+            onClick={onNavigate}
+            className={`sidebar-link${isActive ? ' active' : ''}`}
           >
             {item.label}
-            {isActive && <span style={styles.navActivePip} />}
           </Link>
         );
       })}
@@ -118,24 +148,32 @@ function Sidebar({
   onLogout,
   onLogoClick,
   onSettingsClick,
+  onCloseSidebar,
+  onNavLinkClick,
 }) {
   return (
     <>
-      {/* Overlay for mobile */}
-      {open && (
-        <div
-          style={styles.overlay}
-          onClick={onLogoClick /* close on overlay tap */}
-          aria-hidden="true"
-        />
-      )}
+      {/* Dims the page and closes the sidebar on tap — active only on mobile, see CSS */}
+      <div
+        className={`sidebar-overlay${open ? ' visible' : ''}`}
+        onClick={onCloseSidebar}
+        aria-hidden="true"
+      />
 
-      <aside style={{ ...styles.sidebar, ...(open ? styles.sidebarOpen : styles.sidebarClosed) }}>
-        {/* Logo */}
-        <button style={styles.logoBtn} onClick={onLogoClick} aria-label="Go to home">
-          <RallyLogo />
-          <span style={styles.logoText}>RALLY</span>
-        </button>
+      <aside className={`sidebar ${open ? 'open' : 'closed'}`}>
+        <div className="sidebar-header">
+          <button
+            type="button"
+            className="sidebar-logo"
+            onClick={onLogoClick}
+            aria-label="Go to dashboard"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <RallyLogo />
+            <h2>RALLY</h2>
+          </button>
+          <p className="sidebar-tag">Bring your team together.</p>
+        </div>
 
         <TeamSwitcher
           teamMenuOpen={teamMenuOpen}
@@ -146,20 +184,18 @@ function Sidebar({
           onCreateTeam={onCreateTeam}
         />
 
-        <SidebarNav activePath={activeNavPath} />
+        <SidebarNav activePath={activeNavPath} onNavigate={onNavLinkClick} />
 
-        <div style={styles.sidebarFooter}>
+        <div className="sidebar-footer">
           <button
-            style={{
-              ...styles.footerBtn,
-              ...(activeNavPath === '/settings' ? styles.footerBtnActive : {}),
-            }}
+            type="button"
+            className={`sidebar-settings${activeNavPath === '/settings' ? ' active' : ''}`}
             onClick={onSettingsClick}
           >
             <GearIcon /> Settings
           </button>
-          <button style={styles.footerBtn} onClick={onLogout}>
-            <span>↩</span> Log out
+          <button type="button" className="sidebar-logout" onClick={onLogout}>
+            Log out
           </button>
         </div>
       </aside>
@@ -171,29 +207,53 @@ function Sidebar({
 
 function Topbar({ onToggleSidebar, sidebarOpen, currentNavLabel }) {
   return (
-    <header style={styles.topbar}>
+    <header className="topbar">
       <button
-        style={styles.hamburger}
+        type="button"
+        className="sidebar-toggle"
         onClick={onToggleSidebar}
         aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+        aria-expanded={sidebarOpen}
       >
-        <span style={styles.hamburgerLine} />
-        <span style={styles.hamburgerLine} />
-        <span style={styles.hamburgerLine} />
+        ☰
       </button>
-      <h1 style={styles.topbarTitle}>{currentNavLabel}</h1>
+      <h1 className="topbar-title">{currentNavLabel}</h1>
     </header>
   );
 }
 
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 
+function getIsMobile() {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
 export default function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(getIsMobile);
+  // Sidebar starts open on desktop (a persistent panel) and closed on
+  // mobile (an overlay you open on demand).
+  const [sidebarOpen, setSidebarOpen] = useState(() => !getIsMobile());
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { teams, currentTeam, switchTeam } = useTeam();
+
+  // Keep isMobile in sync, and snap the sidebar to the sensible default
+  // whenever we cross the breakpoint (e.g. rotating a tablet).
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = getIsMobile();
+      setIsMobile((prevMobile) => {
+        if (prevMobile !== mobile) {
+          setSidebarOpen(!mobile);
+        }
+        return mobile;
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Settings isn't in NAV_ITEMS (it lives in the sidebar footer, not the
   // main nav), so give it its own label here.
@@ -203,7 +263,14 @@ export default function MainLayout() {
       : NAV_ITEMS.find(i => i.path === location.pathname)?.label || 'Rally';
 
   const handleToggleSidebar  = useCallback(() => setSidebarOpen(p => !p), []);
+  const handleCloseSidebar   = useCallback(() => setSidebarOpen(false), []);
   const handleToggleTeamMenu = useCallback(() => setTeamMenuOpen(p => !p), []);
+
+  // On mobile the sidebar is an overlay — collapse it after any navigation
+  // so the destination page is visible without an extra tap.
+  const closeSidebarIfMobile = useCallback(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   const handleSwitchTeam = useCallback((teamId) => {
     switchTeam(teamId);
@@ -212,17 +279,19 @@ export default function MainLayout() {
 
   const handleCreateTeam = useCallback(() => {
     setTeamMenuOpen(false);
+    closeSidebarIfMobile();
     navigate('/team-setup');
-  }, [navigate]);
+  }, [navigate, closeSidebarIfMobile]);
 
   const handleLogoClick = useCallback(() => {
-    navigate('/');
-    setSidebarOpen(false); // collapse on mobile after navigating
-  }, [navigate]);
+    navigate('/dashboard');
+    closeSidebarIfMobile();
+  }, [navigate, closeSidebarIfMobile]);
 
   const handleSettingsClick = useCallback(() => {
     navigate('/settings');
-  }, [navigate]);
+    closeSidebarIfMobile();
+  }, [navigate, closeSidebarIfMobile]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -235,7 +304,7 @@ export default function MainLayout() {
   }, [navigate]);
 
   return (
-    <div style={styles.layout}>
+    <div className="layout">
       <Sidebar
         open={sidebarOpen}
         teamMenuOpen={teamMenuOpen}
@@ -248,236 +317,20 @@ export default function MainLayout() {
         onLogout={handleLogout}
         onLogoClick={handleLogoClick}
         onSettingsClick={handleSettingsClick}
+        onCloseSidebar={handleCloseSidebar}
+        onNavLinkClick={closeSidebarIfMobile}
       />
 
-      <div style={{ ...styles.mainContent, marginLeft: sidebarOpen ? 240 : 0 }}>
+      <div className="main-content">
         <Topbar
           onToggleSidebar={handleToggleSidebar}
           sidebarOpen={sidebarOpen}
           currentNavLabel={currentNavLabel}
         />
-        <main style={styles.pageContent}>
+        <main className="page-content">
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
-
-// ─── Styles (inline, no external CSS dependency) ──────────────────────────────
-
-const BG        = '#0f0f0f';
-const SURFACE   = '#161616';
-const BORDER    = '#222';
-const TEXT      = '#e8e8e8';
-const MUTED     = '#555';
-const SIDEBAR_W = 240;
-
-const styles = {
-  // Layout shell
-  layout: {
-    display: 'flex',
-    minHeight: '100vh',
-    background: BG,
-    fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-    color: TEXT,
-  },
-
-  // Sidebar
-  sidebar: {
-    position: 'fixed',
-    top: 0, left: 0, bottom: 0,
-    width: SIDEBAR_W,
-    background: SURFACE,
-    borderRight: `1px solid ${BORDER}`,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '0',
-    zIndex: 100,
-    transition: 'transform 0.22s cubic-bezier(.4,0,.2,1)',
-    overflowY: 'auto',
-  },
-  sidebarOpen:   { transform: 'translateX(0)' },
-  sidebarClosed: { transform: `translateX(-${SIDEBAR_W}px)` },
-
-  overlay: {
-    position: 'fixed', inset: 0,
-    background: 'rgba(0,0,0,.5)',
-    zIndex: 99,
-    display: 'none', // shown via media query or JS if needed
-  },
-
-  // Logo button
-  logoBtn: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '20px 20px 16px',
-    background: 'none', border: 'none',
-    cursor: 'pointer',
-    textDecoration: 'none',
-    color: TEXT,
-    width: '100%',
-  },
-  logoText: {
-    fontSize: 15,
-    fontWeight: 700,
-    letterSpacing: '0.18em',
-    color: PRIMARY,
-  },
-
-  // Team switcher
-  teamSwitcher: {
-    position: 'relative',
-    margin: '0 12px 8px',
-  },
-  teamBtn: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%',
-    padding: '8px 10px',
-    background: 'rgba(255,255,255,.04)',
-    border: `1px solid ${BORDER}`,
-    borderRadius: 8,
-    cursor: 'pointer',
-    color: TEXT,
-    fontSize: 13,
-    textAlign: 'left',
-  },
-  teamDot: {
-    width: 7, height: 7,
-    borderRadius: '50%',
-    background: PRIMARY,
-    flexShrink: 0,
-  },
-  teamName: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  teamArrow: {
-    fontSize: 18, lineHeight: 1,
-    color: MUTED,
-    transition: 'transform .15s',
-    marginTop: -2,
-  },
-  teamMenu: {
-    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-    background: '#1c1c1c',
-    border: `1px solid ${BORDER}`,
-    borderRadius: 8,
-    overflow: 'hidden',
-    zIndex: 200,
-    boxShadow: '0 8px 24px rgba(0,0,0,.5)',
-  },
-  teamMenuItem: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%', padding: '9px 14px',
-    background: 'none', border: 'none',
-    cursor: 'pointer',
-    color: TEXT, fontSize: 13,
-    textAlign: 'left',
-  },
-  teamMenuItemActive: { color: PRIMARY, background: 'rgba(200,255,61,.06)' },
-  teamCheck: { color: PRIMARY, fontSize: 11 },
-  teamMenuDivider: { height: 1, background: BORDER, margin: '4px 0' },
-  teamMenuCreate: { color: MUTED },
-
-  // Nav
-  nav: {
-    display: 'flex', flexDirection: 'column',
-    padding: '8px 12px',
-    gap: 2,
-    flex: 1,
-  },
-  navLink: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    width: '100%',
-    padding: '9px 12px',
-    borderRadius: 8,
-    textDecoration: 'none',
-    fontSize: 14,
-    color: MUTED,
-    position: 'relative',
-    boxSizing: 'border-box',
-    transition: 'background .12s, color .12s',
-  },
-  navLinkActive: {
-    color: TEXT,
-    background: 'rgba(255,255,255,.06)',
-  },
-  navIcon: { fontSize: 13, color: MUTED, width: 16, textAlign: 'center' },
-  navIconActive: { color: PRIMARY },
-  navActivePip: {
-    position: 'absolute', right: 10, top: '50%',
-    transform: 'translateY(-50%)',
-    width: 5, height: 5,
-    borderRadius: '50%',
-    background: PRIMARY,
-  },
-
-  // Sidebar footer
-  sidebarFooter: {
-    padding: '8px 12px 12px',
-    borderTop: `1px solid ${BORDER}`,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
-  footerBtn: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%', padding: '8px 12px',
-    background: 'none', border: 'none',
-    borderRadius: 8,
-    cursor: 'pointer',
-    color: MUTED, fontSize: 13,
-    textAlign: 'left',
-    transition: 'color .12s, background .12s',
-  },
-  footerBtnActive: {
-    color: PRIMARY,
-    background: 'rgba(200,255,61,.06)',
-  },
-
-  // Main content
-  mainContent: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-    transition: 'margin-left 0.22s cubic-bezier(.4,0,.2,1)',
-  },
-
-  // Topbar
-  topbar: {
-    display: 'flex', alignItems: 'center', gap: 16,
-    padding: '0 24px',
-    height: 56,
-    borderBottom: `1px solid ${BORDER}`,
-    background: SURFACE,
-    position: 'sticky', top: 0,
-    zIndex: 50,
-  },
-  hamburger: {
-    display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4,
-    width: 36, height: 36,
-    padding: '0 6px',
-    background: 'none', border: 'none',
-    cursor: 'pointer',
-    borderRadius: 6,
-  },
-  hamburgerLine: {
-    display: 'block',
-    height: 2,
-    background: TEXT,
-    borderRadius: 2,
-    transition: 'background .12s',
-  },
-  topbarTitle: {
-    margin: 0,
-    fontSize: 15,
-    fontWeight: 600,
-    letterSpacing: '0.01em',
-    color: TEXT,
-  },
-
-  // Page content
-  pageContent: {
-    flex: 1,
-    padding: '32px 28px',
-    overflowY: 'auto',
-  },
-};

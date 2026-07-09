@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/landing.css';
 import juniorSoccer from '../assets/junior-soccer.svg';
@@ -146,18 +146,18 @@ function FooterLogoSVG() {
 }
 
 // Navigation Component
-function Navigation({ mobileOpen, onToggle, onNavigate }) {
+function Navigation({ mobileOpen, onToggle, onNavigate, scrolled }) {
   const handleLinkClick = () => {
     if (mobileOpen) onToggle();
   };
 
   return (
-    <header>
+    <header className={scrolled ? 'scrolled' : ''}>
       <div className="header-inner">
-        <a href="#" className="logo">
+        <a href="#" className="logo" aria-label="Rally home">
           <LogoSVG />
         </a>
-        <nav>
+        <nav aria-label="Primary">
           {NAV_LINKS.map(link => (
             <a key={link.href} href={link.href}>{link.label}</a>
           ))}
@@ -180,7 +180,9 @@ function Navigation({ mobileOpen, onToggle, onNavigate }) {
           {NAV_LINKS.map(link => (
             <a key={link.href} href={link.href} onClick={handleLinkClick}>{link.label}</a>
           ))}
-          <a onClick={() => onNavigate('/register')}>Get started</a>
+          <button type="button" className="mobile-nav-cta" onClick={() => onNavigate('/register')}>
+            Get started
+          </button>
         </div>
       )}
     </header>
@@ -427,6 +429,7 @@ function ProductMockup() {
                   type="button"
                   className={`mockup-nav-item ${activeTab === item ? 'active' : ''}`}
                   onClick={() => setActiveTab(item)}
+                  aria-pressed={activeTab === item}
                 >
                   <span>{item}</span>
                   {activeTab === item && <span className="mockup-nav-dot"></span>}
@@ -560,7 +563,7 @@ function Footer() {
   return (
     <footer>
       <div className="footer-inner">
-        <a href="#" className="footer-logo-link">
+        <a href="#" className="footer-logo-link" aria-label="Rally home">
           <FooterLogoSVG />
         </a>
         <p className="footer-tag">Bring your team together.</p>
@@ -573,6 +576,7 @@ function Footer() {
 // Main Landing Component
 export default function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
   const handleNavigation = (path) => {
@@ -584,20 +588,31 @@ export default function Landing() {
     setMobileNavOpen(!mobileNavOpen);
   };
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div>
+      <a href="#main" className="skip-link">Skip to content</a>
       <Navigation
         mobileOpen={mobileNavOpen}
         onToggle={toggleMobileNav}
         onNavigate={handleNavigation}
+        scrolled={scrolled}
       />
-      <HeroSection onNavigate={handleNavigation} />
-      <ProductMockup />
-      <FeaturesSection />
-      <HowItWorks />
-      <AudienceSection />
-      <AboutSection />
-      <CTASection onNavigate={handleNavigation} />
+      <main id="main">
+        <HeroSection onNavigate={handleNavigation} />
+        <ProductMockup />
+        <FeaturesSection />
+        <HowItWorks />
+        <AudienceSection />
+        <AboutSection />
+        <CTASection onNavigate={handleNavigation} />
+      </main>
       <Footer />
     </div>
   );
