@@ -1,0 +1,122 @@
+/* Legal pages — Privacy Policy & Terms of Service
+   Layers on top of landing.css; reuses existing tokens (header, footer,
+   .section, .container, .eyebrow, .btn) so these pages inherit Rally's
+   look without redefining the brand. */
+
+.legal-hero {
+  padding: 6.5rem 0 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legal-title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.legal-updated {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.container-narrow.legal-content {
+  padding-top: 3rem;
+  padding-bottom: 4rem;
+}
+
+.legal-content h2 {
+  font-size: 1.4rem;
+  margin: 2.75rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legal-content h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.legal-content h3 {
+  font-size: 1.05rem;
+  margin: 1.75rem 0 0.6rem;
+}
+
+.legal-content p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+
+.legal-content ul,
+.legal-content ol {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+  padding-left: 1.3rem;
+}
+
+.legal-content li {
+  margin-bottom: 0.5rem;
+}
+
+.legal-content li::marker {
+  color: #c8ff3d;
+}
+
+.legal-content a {
+  color: #c8ff3d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-content strong {
+  color: #fff;
+}
+
+.legal-toc {
+  list-style: none;
+  padding: 1.25rem 1.5rem;
+  margin: 0 0 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  columns: 2;
+  column-gap: 2rem;
+}
+
+.legal-toc li {
+  break-inside: avoid;
+  margin-bottom: 0.4rem;
+  font-size: 0.92rem;
+}
+
+.legal-toc a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.legal-toc a:hover {
+  color: #c8ff3d;
+}
+
+.legal-callout {
+  border: 1px solid rgba(200, 255, 61, 0.35);
+  background: rgba(200, 255, 61, 0.06);
+  border-radius: 12px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.legal-callout p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 640px) {
+  .legal-toc {
+    columns: 1;
+  }
+}

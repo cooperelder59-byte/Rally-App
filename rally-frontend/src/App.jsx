@@ -11,6 +11,9 @@ import Schedule from './pages/Schedule';
 import Performance from './pages/Performance';
 import Roster from './pages/Roster';
 import UserSettings from './pages/UserSettings';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+
 
 export default function App() {
   return (
@@ -32,6 +35,8 @@ export default function App() {
             <Route path="/roster" element={<Roster />} />
             <Route path="/performance" element={<Performance />} />
             <Route path="/settings" element={<UserSettings />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Route>
 
         </Routes>

@@ -208,6 +208,7 @@ function HeroSection({ onNavigate }) {
         </div>
         <div className="hero-gallery" style={{gap: '20px' }}>
           <div className="gallery-image-card">
+            <div className="hero-image-glow"></div>
             <img src={juniorSoccer} alt="Junior soccer team" className="hero-image-img" />
           </div>
         </div>
