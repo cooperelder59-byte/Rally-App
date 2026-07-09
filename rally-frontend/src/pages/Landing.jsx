@@ -128,7 +128,7 @@ function LogoSVG() {
       <polygon points="0,0 13,16 0,32 7,32 20,16 7,0" fill={GREEN}/>
       <polygon points="10,0 23,16 10,32 17,32 30,16 17,0" fill={GREEN}/>
       <polygon points="20,0 33,16 20,32 27,32 40,16 27,0" fill={GREEN}/>
-      <text x="43" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="16" fontWeight="800" fill={GREEN} letterSpacing="0.06em"></text>
+      <text x="48" y="23" fontFamily="'Barlow Condensed', sans-serif" fontSize="16" fontWeight="800" fill={GREEN} letterSpacing="0.06em">Rally</text>
     </svg>
   );
 }
