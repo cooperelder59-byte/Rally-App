@@ -12,10 +12,47 @@ const NAV_LINKS = [
   { label: 'About', href: '#about' }
 ];
 
+// Feature icons — simple monoline SVGs matching the accent color
+function IconMessage() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.4 8.4 0 0 1-8.4 8.4H12a8.3 8.3 0 0 1-3.8-.9L3 21l1.9-5.2a8.3 8.3 0 0 1-.9-3.8A8.4 8.4 0 0 1 12.5 3.1H13a8.4 8.4 0 0 1 8 8.4z" />
+    </svg>
+  );
+}
+function IconCalendar() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <line x1="16" y1="2.5" x2="16" y2="6.5" />
+      <line x1="8" y1="2.5" x2="8" y2="6.5" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+function IconActivity() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 20 9 4 6 12 2 12" />
+    </svg>
+  );
+}
+function IconUsers() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16.5 20.5v-1.8a3.6 3.6 0 0 0-3.6-3.6H6.6A3.6 3.6 0 0 0 3 18.7v1.8" />
+      <circle cx="9.75" cy="7.5" r="3.5" />
+      <path d="M21 20.5v-1.8a3.6 3.6 0 0 0-2.7-3.5" />
+      <path d="M14.9 3.8a3.5 3.5 0 0 1 0 6.9" />
+    </svg>
+  );
+}
+
 const FEATURES = [
   {
     type: 'main',
     label: 'Communication',
+    icon: IconMessage,
     title: 'Keep everyone in the loop.',
     description: 'Post announcements, share updates, and reach every member of your team — no more buried messages or dead group chats.',
     items: [
@@ -28,6 +65,7 @@ const FEATURES = [
   {
     type: 'main',
     label: 'Scheduling',
+    icon: IconCalendar,
     title: 'One calendar for everything.',
     description: 'Practices, games, meetings, and events — all in one shared calendar so your team always knows what\'s on and when.',
     items: [
@@ -39,11 +77,13 @@ const FEATURES = [
   {
     type: 'card',
     label: 'Performance',
+    icon: IconActivity,
     description: 'Coaches track player development, session notes, and progress over the season — all in one view.'
   },
   {
     type: 'card',
     label: 'Roster',
+    icon: IconUsers,
     description: 'Positions, contact details, and full team rosters — always up to date and easy to manage.'
   }
 ];
@@ -409,6 +449,7 @@ function FeaturesSection() {
           {FEATURES.map((feature, idx) => (
             feature.type === 'main' ? (
               <div key={idx} className="feature-main">
+                <div className="feature-icon"><feature.icon /></div>
                 <div className="feature-label">{feature.label}</div>
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>
@@ -420,6 +461,7 @@ function FeaturesSection() {
               </div>
             ) : (
               <div key={idx} className="feature-card">
+                <div className="feature-icon"><feature.icon /></div>
                 <div className="feature-label">{feature.label}</div>
                 <p>{feature.description}</p>
               </div>
