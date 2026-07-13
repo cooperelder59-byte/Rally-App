@@ -67,7 +67,7 @@ const FEATURES = [
     label: 'Scheduling',
     icon: IconCalendar,
     title: 'One calendar for everything.',
-    description: 'Practices, games, meetings, and events — all in one shared calendar so your team always knows what\'s on and when.',
+    description: 'Practices, competitions, meetings, and events — all in one shared calendar so your group always knows what\'s on and when.',
     items: [
       'Recurring and one-off events',
       'Location and event notes',
@@ -78,13 +78,13 @@ const FEATURES = [
     type: 'card',
     label: 'Performance',
     icon: IconActivity,
-    description: 'Coaches track player development, session notes, and progress over the season — all in one view.'
+    description: 'Coaches and leaders track development, session notes, and progress over the season — all in one view.'
   },
   {
     type: 'card',
     label: 'Roster',
     icon: IconUsers,
-    description: 'Positions, contact details, and full team rosters — always up to date and easy to manage.'
+    description: 'Roles, contact details, and full group rosters — always up to date and easy to manage.'
   }
 ];
 
@@ -92,28 +92,28 @@ const STEPS = [
   {
     num: '01',
     title: 'Create your group',
-    description: 'Set up your team, club, or committee in seconds. Invite members by email or a shareable link.'
+    description: 'Set up your club, team, or activity group in seconds. Invite members by email or a shareable link.'
   },
   {
     num: '02',
     title: 'Set up your season',
-    description: 'Add your schedule and get your roster sorted before the season kicks off.'
+    description: 'Add your schedule and get your roster sorted before the season gets underway.'
   },
   {
     num: '03',
     title: 'Run your group',
-    description: 'Post updates, track performance, and keep everyone organised all season long.'
+    description: 'Post updates, track progress, and keep everyone organised all season long.'
   }
 ];
 
 const AUDIENCE = [
   {
     role: 'Coaches & managers',
-    description: 'Track performance, post updates, and run every team you coach from one place — no more chasing people down.'
+    description: 'Track progress, post updates, and run every group you lead from one place — no more chasing people down.'
   },
   {
-    role: 'Students & players',
-    description: 'One app for every group you\'re in. Never miss a practice, a message, or an update again.'
+    role: 'Students & members',
+    description: 'One app for every group you\'re in. Never miss a training session, a message, or an update again.'
   },
   {
     role: 'Schools & admins',
@@ -198,12 +198,12 @@ function HeroSection({ onNavigate }) {
           <div className="eyebrow">School sports & clubs</div>
           <h1>
             Bring your<br />
-            <span className="accent">team together.</span>
+            <span className="accent">group together.</span>
           </h1>
           <p>
-            Rally is the communication platform built for school sports teams, clubs, and groups.
+            Rally is the communication platform built for school sports groups, clubs, and activities.
             Messaging, scheduling, rosters, and performance tracking — all in one place, across
-            every team you're part of.
+            every group you’re part of.
           </p>
           <div className="hero-actions">
             <button onClick={() => onNavigate('/register')} className="btn btn-primary">
@@ -217,7 +217,7 @@ function HeroSection({ onNavigate }) {
         <div className="hero-gallery">
           <div className="gallery-image-card">
             <div className="hero-image-glow"></div>
-            <img src={juniorSoccer} alt="Junior soccer team" className="hero-image-img" />
+            <img src={juniorSoccer} alt="Sports team group activity" className="hero-image-img" />
           </div>
         </div>
       </div>
@@ -304,7 +304,7 @@ function MockupSchedule() {
     <div className="mockup-screen">
       <div className="mockup-screen-header">
         <div>
-          <div className="mockup-eyebrow-sm">FULHAM JUNIORS U14</div>
+          <div className="mockup-eyebrow-sm">NORTHSIDE GROUP</div>
           <div className="mockup-screen-title">Schedule</div>
         </div>
         <span className="mockup-cta-btn">+ New Event</span>
@@ -325,20 +325,20 @@ function MockupSchedule() {
 
 function MockupRoster() {
   const members = [
-    { initial: 'J', name: 'J. Alvarez', badge: 'Player', role: 'Midfielder' },
+    { initial: 'J', name: 'J. Alvarez', badge: 'Member', role: 'Core role' },
     { initial: 'R', name: 'Coach Rivera', badge: 'Coach', role: 'Head Coach', accent: true }
   ];
   return (
     <div className="mockup-screen">
       <div className="mockup-screen-header">
         <div>
-          <div className="mockup-eyebrow-sm">FULHAM JUNIORS U14</div>
+          <div className="mockup-eyebrow-sm">NORTHSIDE GROUP</div>
           <div className="mockup-screen-title">Roster</div>
         </div>
         <span className="mockup-member-count">2 members</span>
       </div>
-      <div className="mockup-search">Search by name or position…</div>
-      <div className="mockup-section-label">Players &amp; coaches</div>
+      <div className="mockup-search">Search by name or role…</div>
+      <div className="mockup-section-label">Members &amp; coaches</div>
       {members.map((m, i) => (
         <div key={i} className="mockup-member-row">
           <div className="mockup-avatar">{m.initial}</div>
@@ -358,19 +358,19 @@ function MockupRoster() {
 
 function MockupPerformance() {
   const stats = [
-    { label: 'Pass Accuracy', value: '84%' },
-    { label: 'Shots/Match', value: '2.3' },
-    { label: 'Tackles', value: '14' },
-    { label: 'Interceptions', value: '9' }
+    { label: 'Consistency', value: '84%' },
+    { label: 'Sessions', value: '2.3' },
+    { label: 'Focus', value: '14' },
+    { label: 'Support', value: '9' }
   ];
   return (
     <div className="mockup-screen">
       <div className="mockup-screen-title">Performance</div>
-      <div className="mockup-eyebrow-sm" style={{ marginBottom: '0.9rem' }}>FULHAM JUNIORS U14 · SEASON 2025–26</div>
+      <div className="mockup-eyebrow-sm" style={{ marginBottom: '0.9rem' }}>NORTHSIDE GROUP · SEASON 2025–26</div>
       <div className="mockup-panel">
-        <div className="mockup-panel-title">Player statistics</div>
+        <div className="mockup-panel-title">Member statistics</div>
         <div className="mockup-perf-row mockup-perf-head">
-          <span>Player</span><span>Apps</span><span>Goals</span><span>Rating</span>
+          <span>Member</span><span>Sessions</span><span>Highlights</span><span>Rating</span>
         </div>
         <div className="mockup-perf-row">
           <span className="mockup-perf-name"><span className="mockup-avatar small">J</span> J. Alvarez</span>
@@ -420,7 +420,7 @@ function ProductMockup() {
               <div className="mockup-logo">RALLY</div>
               <div className="mockup-team-switcher">
                 <span className="mockup-team-dot"></span>
-                <span className="mockup-team-name">Fulham Juniors U14</span>
+                <span className="mockup-team-name">Northside Group</span>
                 <span className="mockup-chevron">⌄</span>
               </div>
               {MOCKUP_TABS.map(item => (
@@ -534,9 +534,9 @@ function AboutSection() {
     <section className="section section-dark" id="about">
       <div className="container container-narrow">
         <div className="eyebrow">About Rally</div>
-        <h2>Built for school sports and clubs.</h2>
-        <p>Rally fixes the disorganisation that school sports teams and clubs deal with every season — one place for communication, scheduling, rosters, and performance tracking.</p>
-        <p>Create your team, invite your players, and get your season organised in minutes.</p>
+        <h2>Built for school sports, clubs, and activity groups.</h2>
+        <p>Rally fixes the disorganisation that school groups deal with every season — one place for communication, scheduling, rosters, and performance tracking.</p>
+        <p>Create your group, invite your members, and get your season organised in minutes.</p>
       </div>
     </section>
   );

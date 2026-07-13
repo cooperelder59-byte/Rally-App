@@ -337,7 +337,7 @@ function TeamHeader({ team }) {
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}>
-            {team.name || "Your Team"}
+            {team.name || "Your Group"}
           </h1>
         </div>
         {meta && (
@@ -1101,14 +1101,14 @@ function TeamInfoTab({ team, currentUser }) {
   };
 
   if (!team) {
-    return <EmptyState message="No team selected" description="Create or join a team to get started." />;
+    return <EmptyState message="No group selected" description="Create or join a group to get started." />;
   }
 
   return (
     <div style={{ flex: 1, overflowY: "auto" }}>
-      <InfoRow label="Team Name"   value={team.name} />
+      <InfoRow label="Group Name"   value={team.name} />
       <InfoRow label="Invite Code" value={team.inviteCode} accent />
-      <InfoRow label="Sport"       value={team.sport} />
+      <InfoRow label="Activity"       value={team.sport} />
       <InfoRow label="Location"    value={team.location} />
       <InfoRow
         label="Created"
@@ -1137,7 +1137,7 @@ function TeamInfoTab({ team, currentUser }) {
               value={desc}
               onChange={e => setDesc(e.target.value)}
               rows={4}
-              placeholder="Describe your team…"
+              placeholder="Describe your group…"
               disabled={saving}
               style={{
                 background: THEME.surface2,

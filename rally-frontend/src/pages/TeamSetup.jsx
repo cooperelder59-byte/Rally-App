@@ -32,8 +32,8 @@ const TEAM_NAME_MAX = 60;
 
 function validateTeamName(name) {
   const trimmed = name.trim();
-  if (!trimmed) return 'Team name is required.';
-  if (trimmed.length > TEAM_NAME_MAX) return `Team name must be ${TEAM_NAME_MAX} characters or fewer.`;
+  if (!trimmed) return 'Group name is required.';
+  if (trimmed.length > TEAM_NAME_MAX) return `Group name must be ${TEAM_NAME_MAX} characters or fewer.`;
   return null;
 }
 
@@ -184,7 +184,7 @@ export default function TeamSetup() {
         <div className="teamsetup-card">
           <h1>Team created 🎉</h1>
           <p className="teamsetup-sub">
-            Share this invite code with your players and staff so they can join {createdTeam.name}.
+            Share this invite code with your members so they can join {createdTeam.name}.
           </p>
 
           <div className="invite-code-display" role="group" aria-label="Team invite code">
@@ -213,8 +213,8 @@ export default function TeamSetup() {
   return (
     <div className="teamsetup-page">
       <div className="teamsetup-card">
-        <h1>Set up your team</h1>
-        <p className="teamsetup-sub">Create a new team or join one with an invite code.</p>
+        <h1>Set up your group</h1>
+        <p className="teamsetup-sub">Create a new group or join one with an invite code.</p>
 
         <div className="teamsetup-tabs" role="tablist" aria-label="Team setup mode">
           <button
@@ -225,7 +225,7 @@ export default function TeamSetup() {
             onClick={() => switchMode('create')}
             disabled={isLoading}
           >
-            Create a team
+            Create a group
           </button>
           <button
             type="button"
@@ -235,7 +235,7 @@ export default function TeamSetup() {
             onClick={() => switchMode('join')}
             disabled={isLoading}
           >
-            Join a team
+            Join a group
           </button>
         </div>
 
@@ -243,7 +243,7 @@ export default function TeamSetup() {
           <form className="teamsetup-form" onSubmit={handleCreate} noValidate>
             <input
               type="text"
-              placeholder="Team name"
+              placeholder="Group name"
               required
               maxLength={TEAM_NAME_MAX}
               value={teamName}
@@ -255,14 +255,14 @@ export default function TeamSetup() {
             {fieldError && <p id={nameErrId} className="form-error">{fieldError}</p>}
             <input
               type="text"
-              placeholder="Sport (e.g. Soccer, Hockey)"
+              placeholder="Activity or sport (e.g. Basketball, Drama, Robotics)"
               value={sport}
               onChange={(e) => setSport(e.target.value)}
               disabled={isLoading}
             />
             {errorMsg && <p className="form-error">{errorMsg}</p>}
             <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create team'}
+              {isLoading ? 'Creating...' : 'Create group'}
             </button>
           </form>
         ) : (
@@ -280,7 +280,7 @@ export default function TeamSetup() {
             {fieldError && <p id={codeErrId} className="form-error">{fieldError}</p>}
             {errorMsg && <p className="form-error">{errorMsg}</p>}
             <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-              {isLoading ? 'Joining...' : 'Join team'}
+              {isLoading ? 'Joining...' : 'Join group'}
             </button>
           </form>
         )}

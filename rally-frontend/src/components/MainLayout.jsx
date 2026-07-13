@@ -79,7 +79,7 @@ function TeamSwitcher({ teamMenuOpen, onToggle, teams, currentTeam, onSwitch, on
         type="button"
         className="team-switcher-btn"
         onClick={onToggle}
-        aria-label="Switch team"
+        aria-label="Switch group"
         aria-haspopup="menu"
         aria-expanded={teamMenuOpen}
       >
@@ -108,7 +108,7 @@ function TeamSwitcher({ teamMenuOpen, onToggle, teams, currentTeam, onSwitch, on
             className="team-switcher-item add"
             onClick={onCreateTeam}
           >
-            + Create or join a team
+            + Create or join a group
           </button>
         </div>
       )}
@@ -178,7 +178,7 @@ function Sidebar({
             <RallyLogo />
             <h2>RALLY</h2>
           </button>
-          <p className="sidebar-tag">Bring your team together.</p>
+          <p className="sidebar-tag">Bring your group together.</p>
         </div>
 
         <TeamSwitcher
