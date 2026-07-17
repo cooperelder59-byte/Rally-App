@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/landing.css';
 import juniorSoccer from '../assets/junior-soccer.svg';
@@ -11,6 +11,53 @@ const NAV_LINKS = [
   { label: 'How it works', href: '#how-it-works' },
   { label: 'About', href: '#about' }
 ];
+
+// ---- Motion helpers -------------------------------------------------
+
+// Detects prefers-reduced-motion once; used to gate cursor-driven effects.
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const onChange = (e) => setReduced(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
+// Reveals elements with the `.reveal` class as they scroll into view.
+// Returns a ref to attach to the scrolling/container root (defaults to viewport).
+function useScrollReveal() {
+  const reduced = usePrefersReducedMotion();
+  useEffect(() => {
+    if (reduced) return;
+    const els = document.querySelectorAll('.reveal');
+    if (!els.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [reduced]);
+}
+
+// Sets --mx/--my custom properties on an element from a mouse event,
+// used to drive the cursor-spotlight glow on cards.
+function handleCardSpotlight(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+  e.currentTarget.style.setProperty('--my', `${e.clientY - rect.top}px`);
+}
 
 // Feature icons — simple monoline SVGs matching the accent color
 function IconMessage() {
@@ -146,7 +193,7 @@ function FooterLogoSVG() {
 }
 
 // Navigation Component
-function Navigation({ mobileOpen, onToggle, onNavigate, scrolled }) {
+function Navigation({ mobileOpen, onToggle, onNavigate, scrolled, scrollPct }) {
   const handleLinkClick = () => {
     if (mobileOpen) onToggle();
   };
@@ -185,20 +232,51 @@ function Navigation({ mobileOpen, onToggle, onNavigate, scrolled }) {
           </button>
         </div>
       )}
+      <div className="scroll-progress" style={{ width: `${scrollPct}%` }} aria-hidden="true" />
     </header>
   );
 }
 
 // Hero Section Component
 function HeroSection({ onNavigate }) {
+  const reduced = usePrefersReducedMotion();
+  const cardRef = useRef(null);
+
+  const onMouseMove = useCallback((e) => {
+    if (reduced || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    cardRef.current.style.setProperty('--ry', `${px * 7}deg`);
+    cardRef.current.style.setProperty('--rx', `${-py * 7}deg`);
+  }, [reduced]);
+
+  const onMouseLeave = useCallback(() => {
+    if (!cardRef.current) return;
+    cardRef.current.style.setProperty('--ry', '0deg');
+    cardRef.current.style.setProperty('--rx', '0deg');
+  }, []);
+
+  // Split the headline into words for a staggered load-in reveal.
+  const headlineWords = ['Bring', 'your'];
+  const accentWords = ['group', 'together.'];
+
   return (
     <section className="hero">
+      <div className="hero-mesh" aria-hidden="true"></div>
       <div className="hero-inner">
         <div className="hero-text">
           <div className="eyebrow">School sports & clubs</div>
           <h1>
-            Bring your<br />
-            <span className="accent">group together.</span>
+            {headlineWords.map((w, i) => (
+              <span key={w} className="word" style={{ '--wd': `${i * 90}ms` }}>{w}&nbsp;</span>
+            ))}
+            <br />
+            <span className="accent">
+              {accentWords.map((w, i) => (
+                <span key={w} className="word" style={{ '--wd': `${(headlineWords.length + i) * 90}ms` }}>{w}&nbsp;</span>
+              ))}
+            </span>
           </h1>
           <p>
             Rally is the communication platform built for school sports groups, clubs, and activities.
@@ -215,9 +293,22 @@ function HeroSection({ onNavigate }) {
           </div>
         </div>
         <div className="hero-gallery">
-          <div className="gallery-image-card">
+          <div
+            className="gallery-image-card"
+            ref={cardRef}
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+          >
             <div className="hero-image-glow"></div>
             <img src={juniorSoccer} alt="Sports team group activity" className="hero-image-img" />
+            <div className="hero-float-pill pill-1">
+              <span className="pill-dot">C</span>
+              <span className="pill-text"><b>Coach Rivera</b>Practice moved to 5:30pm</span>
+            </div>
+            <div className="hero-float-pill pill-2">
+              <span className="pill-dot">✓</span>
+              <span className="pill-text"><b>Schedule</b>Everyone’s confirmed</span>
+            </div>
           </div>
         </div>
       </div>
@@ -404,12 +495,12 @@ function ProductMockup() {
   return (
     <section className="section" id="preview">
       <div className="container">
-        <div className="section-header">
+        <div className="section-header reveal">
           <div className="eyebrow">See it in action</div>
           <h2>Your team's home base.</h2>
         </div>
 
-        <div className="mockup-frame">
+        <div className="mockup-frame reveal" style={{ '--d': '80ms' }}>
           <div className="mockup-topbar">
             <div className="mockup-dot red"></div>
             <div className="mockup-dot yellow"></div>
@@ -451,14 +542,19 @@ function FeaturesSection() {
   return (
     <section className="section" id="features">
       <div className="container">
-        <div className="section-header">
+        <div className="section-header reveal">
           <div className="eyebrow">What Rally does</div>
           <h2>Everything your team needs.<br/>Nothing it doesn't.</h2>
         </div>
         <div className="features-grid">
           {FEATURES.map((feature, idx) => (
             feature.type === 'main' ? (
-              <div key={idx} className="feature-main">
+              <div
+                key={idx}
+                className="feature-main reveal"
+                style={{ '--d': `${idx * 90}ms` }}
+                onMouseMove={handleCardSpotlight}
+              >
                 <div className="feature-icon"><feature.icon /></div>
                 <div className="feature-label">{feature.label}</div>
                 <h3>{feature.title}</h3>
@@ -470,7 +566,12 @@ function FeaturesSection() {
                 </ul>
               </div>
             ) : (
-              <div key={idx} className="feature-card">
+              <div
+                key={idx}
+                className="feature-card reveal"
+                style={{ '--d': `${idx * 90}ms` }}
+                onMouseMove={handleCardSpotlight}
+              >
                 <div className="feature-icon"><feature.icon /></div>
                 <div className="feature-label">{feature.label}</div>
                 <p>{feature.description}</p>
@@ -488,13 +589,18 @@ function HowItWorks() {
   return (
     <section className="section section-dark" id="how-it-works">
       <div className="container">
-        <div className="section-header">
+        <div className="section-header reveal">
           <div className="eyebrow">How it works</div>
           <h2>Set up in minutes.<br/>Run all season.</h2>
         </div>
         <div className="steps">
-          {STEPS.map(step => (
-            <div key={step.num} className="step">
+          {STEPS.map((step, idx) => (
+            <div
+              key={step.num}
+              className="step reveal"
+              style={{ '--d': `${idx * 110}ms` }}
+              onMouseMove={handleCardSpotlight}
+            >
               <div className="step-num">{step.num}</div>
               <h3>{step.title}</h3>
               <p>{step.description}</p>
@@ -511,13 +617,18 @@ function AudienceSection() {
   return (
     <section className="section" id="audience">
       <div className="container">
-        <div className="section-header">
+        <div className="section-header reveal">
           <div className="eyebrow">Who it's for</div>
           <h2>Built for every person<br/>in your school's groups.</h2>
         </div>
         <div className="audience-grid">
-          {AUDIENCE.map(item => (
-            <div key={item.role} className="audience-card">
+          {AUDIENCE.map((item, idx) => (
+            <div
+              key={item.role}
+              className="audience-card reveal"
+              style={{ '--d': `${idx * 90}ms` }}
+              onMouseMove={handleCardSpotlight}
+            >
               <div className="audience-role">{item.role}</div>
               <p>{item.description}</p>
             </div>
@@ -532,7 +643,7 @@ function AudienceSection() {
 function AboutSection() {
   return (
     <section className="section section-dark" id="about">
-      <div className="container container-narrow">
+      <div className="container container-narrow reveal">
         <div className="eyebrow">About Rally</div>
         <h2>Built for school sports, clubs, and activity groups.</h2>
         <p>Rally fixes the disorganisation that school groups deal with every season — one place for communication, scheduling, rosters, and performance tracking.</p>
@@ -546,7 +657,7 @@ function AboutSection() {
 function CTASection({ onNavigate }) {
   return (
     <section className="section section-waitlist" id="get-started">
-      <div className="container container-narrow">
+      <div className="container container-narrow reveal">
         <div className="eyebrow">Get started</div>
         <h2>Ready to bring your team together?</h2>
         <p className="waitlist-sub">Create your team and start organising your season today.</p>
@@ -577,6 +688,7 @@ function Footer() {
 export default function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [scrollPct, setScrollPct] = useState(0);
   const navigate = useNavigate();
 
   const handleNavigation = (path) => {
@@ -589,20 +701,29 @@ export default function Landing() {
   };
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      setScrollPct(max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useScrollReveal();
+
   return (
     <div>
+      <div className="grain-overlay" aria-hidden="true"></div>
       <a href="#main" className="skip-link">Skip to content</a>
       <Navigation
         mobileOpen={mobileNavOpen}
         onToggle={toggleMobileNav}
         onNavigate={handleNavigation}
         scrolled={scrolled}
+        scrollPct={scrollPct}
       />
       <main id="main">
         <HeroSection onNavigate={handleNavigation} />
