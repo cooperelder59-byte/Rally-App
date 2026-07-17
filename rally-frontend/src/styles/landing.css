@@ -911,13 +911,13 @@ footer { border-top: 1px solid var(--border); padding: 44px 0; }
 .btn-primary:hover::after { left: 130%; }
 
 /* ---- Hero gradient mesh ---- */
-.hero { position: relative; }
+.hero { position: relative; overflow-x: visible; overflow-y: hidden; }
 .hero-mesh {
   position: absolute;
-  top: -120px;
+  top: 0px;
   left: 50%;
   width: 1100px;
-  height: 700px;
+  height: 620px;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: -1;
